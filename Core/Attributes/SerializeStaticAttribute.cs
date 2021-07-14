@@ -41,10 +41,11 @@ namespace PyroDK
   public static class SerializeStaticFields
   {
     public static event System.Action OnNewFieldsApplied;
-    public static string EditorFilePath => Application.dataPath + ASSET_PATH;
 
 
-    private const string ASSET_PATH = "/Settings/[SerializeStatic].json";
+    // TODO refactor to pull from some ScriptableObject editor singleton
+    public static string EditorFilePath => Application.dataPath + "/Settings/[SerializeStatic].json";
+
 
 
     private static SerialFieldMap s_FieldMap = new SerialFieldMap(new HashMapParams(64));
