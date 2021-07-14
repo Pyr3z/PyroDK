@@ -58,3 +58,15 @@ sysinfo.txt
 # Crashlytics generated file
 crashlytics-build.properties
 
+# specific folders
+/\[Assets\]/Logos/
+/\[Assets\]/Misc/
+/\[Assets\]/Models/
+/\[Assets\]/Terrains/
+/\[Assets\]/Textures/
+/Audio/
+/Game2D/
+/Game3D/
+
+# risky addition:
+*.meta
