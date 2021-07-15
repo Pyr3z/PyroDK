@@ -294,6 +294,22 @@ namespace PyroDK
       [SerializeStatic]
       public static Color32 Error                 = FromHex("#910329FF");
 
+    }
+
+
+    public static class GUI
+    {
+
+      [SerializeStatic]
+      public static Color32 Text                  = FromHex("#D3D8D8FF");
+      [SerializeStatic]
+      public static Color32 TextBright            = FromHex("#FFF9F9FF");
+      [SerializeStatic]
+      public static Color32 TextDim               = FromHex("#AA9C9CFF");
+
+      [SerializeStatic]
+      public static Color32 Comment               = FromHex("#57A64AFF");
+
       [SerializeStatic]
       public static Color32 TypeByRef             = FromHex("#4EC9B1FF");
       [SerializeStatic]
@@ -313,37 +329,24 @@ namespace PyroDK
       public static Color32 ValueInfo             = FromHex("#2C8FABFF");
 
       [SerializeStatic]
-      public static Color32 GizmoBounds           = FromHex("#FFB300FF");
+      public static Color32 GizmoBounds           = FromHex("#F8B300FF");
       [SerializeStatic]
       public static Color32 GizmoCollider         = FromHex("#009D9DFF");
       [SerializeStatic]
-      public static Color32 GizmoColliderDisabled = FromHex("#2C4C4CFF");
-      [SerializeStatic]
       public static Color32 GizmoTrigger          = FromHex("#00CE00FF");
-      [SerializeStatic]
-      public static Color32 GizmoTriggerDisabled  = FromHex("#3A653AFF");
-
-    }
-
-
-    public static class GUI
-    {
 
       [SerializeStatic]
-      public static Color32 FieldBG         = FromHex("#2C2A2A77");
+      public static Color32 FieldBG               = FromHex("#2C2A2A77");
       [SerializeStatic]
-      public static Color32 FieldOutline    = FromHex("#1D242488");
+      public static Color32 FieldOutline          = FromHex("#1D242488");
       
       [SerializeStatic]
-      public static Color32 SectionBG       = FromHex("#383636FF"); // was 3B4545
+      public static Color32 SectionBG             = FromHex("#121010FF"); // ~ 383636, 3B4545
 
       [SerializeStatic]
-      public static Color32 HashMapBG       = FromHex("#0B1111FF");
+      public static Color32 HashMapBG             = FromHex("#0B1111FF");
       [SerializeStatic]
-      public static Color32 HashMapOutline  = FromHex("#3A4545FF");
-
-      [SerializeStatic]
-      public static Color32 Comment         = FromHex("#57A64AFF");
+      public static Color32 HashMapOutline        = FromHex("#3A4545FF");
 
     }
 

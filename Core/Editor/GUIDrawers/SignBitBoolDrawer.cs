@@ -144,7 +144,7 @@ namespace PyroDK.Editor
           }
           else
           {
-            float flipped = Floats.Squeezed(-current - 1f - Floats.EPSILON) + 1f;
+            float flipped = Floats.SqueezedNaN(-current - 1f - Floats.EPSILON) + 1f;
             float edit    = Mathf.Max(EditorGUI.FloatField(pos, flipped, Styles.NumberField), 0f);
            
             if (!edit.Approximately(flipped))
@@ -161,7 +161,7 @@ namespace PyroDK.Editor
         {
           if (boolval)
           {
-            float adjusted = Floats.Squeezed(current - 1f - Floats.EPSILON) + 1f;
+            float adjusted = Floats.SqueezedNaN(current - 1f - Floats.EPSILON) + 1f;
             float edit = Mathf.Max(EditorGUI.FloatField(pos, adjusted, Styles.NumberField), 0f);
 
             if (!edit.Approximately(adjusted))
@@ -205,7 +205,7 @@ namespace PyroDK.Editor
           }
           else
           {
-            float flipped = Floats.Squeezed(-current - 1f - Floats.EPSILON) + 1f;
+            float flipped = Floats.SqueezedNaN(-current - 1f - Floats.EPSILON) + 1f;
             float edit = Mathf.Max(EditorGUI.FloatField(pos, label_float, flipped, Styles.NumberField), 0f);
 
             if (!edit.Approximately(flipped))
@@ -222,7 +222,7 @@ namespace PyroDK.Editor
         {
           if (boolval)
           {
-            float adjusted = Floats.Squeezed(current - 1f - Floats.EPSILON) + 1f;
+            float adjusted = Floats.SqueezedNaN(current - 1f - Floats.EPSILON) + 1f;
             float edit = Mathf.Max(EditorGUI.FloatField(pos, label_float, adjusted, Styles.NumberField), 0f);
 
             if (!edit.Approximately(adjusted))

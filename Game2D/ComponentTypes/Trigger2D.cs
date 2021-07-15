@@ -8,6 +8,8 @@
   Invokes Collider2D-triggered events; highly Editor-friendly.
 **/
 
+using System.Collections.Generic;
+
 using UnityEngine;
 
 
@@ -18,10 +20,6 @@ namespace PyroDK.Game2D
   [RequireComponent(typeof(Collider2D))]
   public sealed class Trigger2D : BaseComponent
   {
-    [SerializeStatic]
-    private static bool DEFAULT_DRAW_GIZMOS = true;
-
-
 
   [Header("Target Requirements")]
     [SerializeField]
@@ -37,17 +35,6 @@ namespace PyroDK.Game2D
     private GameObjectEvent m_OnTargetStay;
     [SerializeField]
     private GameObjectEvent m_OnTargetExit;
-
-
-  [Header("Triggers")]
-    [SerializeField] [RequiredReference]
-    private Collider2D m_Trigger;
-
-    #if DEBUG
-  [Header("[DebugOnly]")]
-    [SerializeField]
-    private bool m_DrawGizmos = DEFAULT_DRAW_GIZMOS;
-    #endif
 
 
     [System.NonSerialized]
@@ -112,45 +99,60 @@ namespace PyroDK.Game2D
     }
 
 
+    #if DEBUG
+
+  [Header("[DebugOnly]")]
+    [SerializeField]
+    private Color32 m_GizmoColor = Colors.GUI.GizmoTrigger;
+    [SerializeField] [ReadOnly]
+    private List<Collider2D> m_Triggers = new List<Collider2D>();
+
 
     private void OnValidate()
     {
-      if (enabled)
+      GetComponentsInChildren(includeInactive: true, m_Triggers);
+      m_Triggers.RemoveAll((collider) => !collider.isTrigger);
+    }
+
+    private void OnDrawGizmos()
+    {
+      if (m_Triggers.IsEmpty() || m_GizmoColor.IsClear())
+        return;
+
+      bool is_enabled = isActiveAndEnabled;
+
+      foreach (var trig in m_Triggers)
       {
-        if (m_Trigger)
+        if (!trig)
+          continue;
+
+        if (is_enabled && trig.enabled)
+          Gizmos.color = m_GizmoColor;
+        else
+          Gizmos.color = m_GizmoColor.ToGrayscale().AlphaWash();
+
+        if (trig is CircleCollider2D circ)
         {
-          if (!m_Trigger.isTrigger)
-            m_Trigger = null;
+          Gizmos.matrix = transform.localToWorldMatrix;
+          Gizmos.DrawWireSphere(circ.offset, circ.radius);
+        }
+        else if (trig is CapsuleCollider2D cap)
+        {
+          var (c1, c2) = Game3D.CharacterMobility.CapsuleCentersLocal(cap);
+          float radius = cap.size[((int)cap.direction).NOT()] / 2f + 0.025f;
+
+          Gizmos.matrix = trig.transform.localToWorldMatrix;
+          Gizmos.DrawWireSphere(c1, radius);
+          Gizmos.DrawWireSphere(c2, radius);
         }
         else
         {
-          if (TryGetComponent(out Collider2D coll) && coll.isTrigger)
-            m_Trigger = coll;
+          var bounds = trig.bounds;
+          Gizmos.DrawWireCube(bounds.center, bounds.size);
         }
       }
     }
-
-
-    #if DEBUG
-    private void OnDrawGizmos()
-    {
-      if (!m_DrawGizmos || !m_Trigger)
-        return;
-
-      Gizmos.color  = m_Trigger.enabled ? Colors.Debug.GizmoTrigger : Colors.Debug.GizmoTriggerDisabled;
-
-      if (m_Trigger is CircleCollider2D circ)
-      {
-        Gizmos.matrix = transform.localToWorldMatrix;
-        Gizmos.DrawWireSphere(circ.offset, circ.radius);
-      }
-      else
-      {
-        var bounds = m_Trigger.bounds;
-        Gizmos.DrawWireCube(bounds.center, bounds.size);
-      }
-    }
-    #endif
+    #endif // DEBUG
 
   }
 

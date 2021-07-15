@@ -224,7 +224,7 @@ namespace PyroDK
       return (val < least) ? least : val;
     }
 
-    public static float Squeezed(this float val)
+    public static float SqueezedNaN(this float val)
     {
       if (float.IsNaN(val) || val * val < EPSILON2)
         return 0f;
@@ -232,9 +232,18 @@ namespace PyroDK
       return val;
     }
 
+
+    public static float Squeezed(this float val)
+    {
+      if (val * val < EPSILON2)
+        return 0f;
+
+      return val;
+    }
+
     public static float Squeezed(this float val, float epsilon)
     {
-      if (float.IsNaN(val) || val * val < epsilon * epsilon)
+      if (val * val < epsilon * epsilon)
         return 0f;
 
       return val;

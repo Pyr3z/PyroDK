@@ -656,6 +656,21 @@ namespace PyroDK
     }
 
 
+    public static void Squeeze(ref this Vector3 v)
+    {
+      v = new Vector3(Floats.Squeezed(v.x),
+                      Floats.Squeezed(v.y),
+                      Floats.Squeezed(v.z));
+    }
+
+    public static Vector3 Squeezed(in this Vector3 v)
+    {
+      return new Vector3(Floats.Squeezed(v.x),
+                         Floats.Squeezed(v.y),
+                         Floats.Squeezed(v.z));
+    }
+
+
     public static void Clamp(ref this Vector3 v, float min, float max)
     {
       v.x = v.x.Clamp(min, max);

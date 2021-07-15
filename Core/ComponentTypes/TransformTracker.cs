@@ -21,11 +21,11 @@ namespace PyroDK
     [System.Flags]
     public enum OptionFlags
     {
-      Disabled    = (0 << 0),
-      Position    = (1 << 0),
-      Rotation    = (1 << 1),
+      TrackPosition = (1 << 0),
+      TrackRotation = (1 << 1),
 
-      UseOffset   = (1 << 3),
+      [System.Obsolete]
+      UseOffset = (1 << 3),
 
       Update      = (1 << 4),
       FixedUpdate = (1 << 5),
@@ -40,13 +40,18 @@ namespace PyroDK
     }
 
 
+    #if UNITY_EDITOR
+    [SerializeField] [ButtonBool(text: "Set Transform to Offset")]
+    private bool m_ApplyPoseButton;
+    #endif
+
+
     [SerializeField] [RequiredReference(color_hex: "#EEA02011")]
     private Transform   m_Target;
-    [SerializeField]
-    private OptionFlags m_OptionFlags = OptionFlags.Position | OptionFlags.Update;
-    [SerializeField]
+    [SerializeField] [ViewAsBools]
+    private OptionFlags m_Options = OptionFlags.TrackPosition | OptionFlags.Update;
+    [SerializeField] [Toggleable]
     private Pose        m_OffsetPose = Poses.Disabled;
-
 
     [System.NonSerialized]
     private System.Action m_UpdateCallback, m_FixedUpdateCallback, m_LateUpdateCallback;
@@ -55,7 +60,7 @@ namespace PyroDK
     
     public void UpdatePosition()
     {
-      if (m_Target)
+      if (m_Target && m_OffsetPose.IsEnabled())
       {
         transform.position = m_Target.position + m_OffsetPose.position;
       }
@@ -63,7 +68,7 @@ namespace PyroDK
 
     public void UpdateRotation()
     {
-      if (m_Target)
+      if (m_Target && m_OffsetPose.IsEnabled())
       {
         transform.rotation = m_Target.rotation * m_OffsetPose.rotation;
       }
@@ -71,7 +76,7 @@ namespace PyroDK
 
     public void UpdateFullPose()
     {
-      if (m_Target)
+      if (m_Target && m_OffsetPose.IsEnabled())
       {
         transform.position = m_Target.position + m_OffsetPose.position;
         transform.rotation = m_Target.rotation * m_OffsetPose.rotation;
@@ -79,150 +84,70 @@ namespace PyroDK
     }
 
 
-    public void UpdateCallbacks()
-    {
-      if (m_OptionFlags < OptionFlags.Update)
-      {
-        m_UpdateCallback      = NoOperation;
-        m_FixedUpdateCallback = NoOperation;
-        m_LateUpdateCallback  = NoOperation;
-        return;
-      }
-
-      if (m_OptionFlags.HasFlag(OptionFlags.Update))
-      {
-        AssignCallback(ref m_UpdateCallback);
-      }
-      else
-      {
-        m_UpdateCallback = NoOperation;
-      }
-
-      if (m_OptionFlags.HasFlag(OptionFlags.FixedUpdate))
-      {
-        AssignCallback(ref m_FixedUpdateCallback);
-      }
-      else
-      {
-        m_FixedUpdateCallback = NoOperation;
-      }
-
-      if (m_OptionFlags.HasFlag(OptionFlags.LateUpdate))
-      {
-        AssignCallback(ref m_LateUpdateCallback);
-      }
-      else
-      {
-        m_LateUpdateCallback = NoOperation;
-      }
-    }
-
-
-    private static void NoOperation()
-    {
-    }
-
-
     private void Update()
     {
-      m_UpdateCallback();
+      m_UpdateCallback?.Invoke();
     }
 
     private void FixedUpdate()
     {
-      m_FixedUpdateCallback();
+      m_FixedUpdateCallback?.Invoke();
     }
 
     private void LateUpdate()
     {
-      m_LateUpdateCallback();
+      m_LateUpdateCallback?.Invoke();
     }
 
 
-    private void Awake()
+    private void OnEnable()
     {
       UpdateCallbacks();
     }
 
 
-    private void AssignCallback(ref System.Action callback)
+    private void UpdateCallbacks()
     {
-      switch ((int)m_OptionFlags & 0x03)
+      m_UpdateCallback      =
+      m_FixedUpdateCallback =
+      m_LateUpdateCallback  = null;
+
+      if (m_Options < OptionFlags.Update)
+        return;
+
+      var callback = SelectCallback();
+
+      if (m_Options.HasFlag(OptionFlags.Update))
+        m_UpdateCallback = callback;
+
+      if (m_Options.HasFlag(OptionFlags.FixedUpdate))
+        m_FixedUpdateCallback = SelectCallback();
+
+      if (m_Options.HasFlag(OptionFlags.LateUpdate))
+        m_LateUpdateCallback = SelectCallback();
+    }
+
+    private System.Action SelectCallback()
+    {
+      switch ((int)m_Options & 0x03)
       {
         case 0x01:
-          callback = UpdatePosition;
-          break;
+          return UpdatePosition;
         case 0x02:
-          callback = UpdateRotation;
-          break;
+          return UpdateRotation;
         case 0x03:
-          callback = UpdateFullPose;
-          break;
+          return UpdateFullPose;
         default:
-          callback = NoOperation;
-          break;
+          return null;
       }
     }
 
     private void OnValidate()
     {
-      if (!m_OptionFlags.HasFlag(OptionFlags.UseOffset))
+      if (m_ApplyPoseButton)
       {
-        if (m_Target)
-        {
-          if (m_OptionFlags.HasFlag(OptionFlags.Position))
-            transform.position = m_Target.position;
-          if (m_OptionFlags.HasFlag(OptionFlags.Rotation))
-            transform.rotation = m_Target.rotation;
-        }
-
-        m_OffsetPose = Poses.Enabled;
-      }
-      else if (!m_OffsetPose.IsEnabled())
-      {
-        if (Application.IsPlaying(this))
-        {
-          m_OffsetPose.rotation.Normalize();
-          return;
-        }
-
-        if (m_Target)
-        {
-          if (m_OptionFlags.HasFlag(OptionFlags.Position))
-          {
-            if (m_OffsetPose.position.IsZero())
-            {
-              m_OffsetPose.position = transform.position - m_Target.position;
-            }
-            else
-            {
-              m_OptionFlags &= ~OptionFlags.UseOffset;
-              transform.position = m_Target.position;
-              m_OffsetPose.position.Set(0f, 0f, 0f);
-            }
-          }
-          else
-          {
-            m_OffsetPose.position.Set(0f, 0f, 0f);
-          }
-
-          if (m_OptionFlags.HasFlag(OptionFlags.Rotation))
-          {
-            if (m_OffsetPose.rotation.IsIdentity())
-            {
-              m_OffsetPose.rotation = transform.rotation * m_Target.rotation.Inverted();
-            }
-            else
-            {
-              transform.rotation = m_Target.rotation;
-              m_OffsetPose.rotation.Set(0f, 0f, 0f, 1f);
-            }  
-          }
-          else
-          {
-            m_OffsetPose.rotation.Set(0f, 0f, 0f, 1f);
-          }
-        }
+        SelectCallback()?.Invoke();
+        m_ApplyPoseButton = false;
       }
     }
 
@@ -231,9 +156,9 @@ namespace PyroDK
       if (!m_Target)
         return;
 
-      if (m_OptionFlags.HasFlag(OptionFlags.UseOffset) && !m_OffsetPose.position.IsZero())
+      if (m_OffsetPose.IsEnabled() && !m_OffsetPose.position.IsZero())
       {
-        Gizmos.color = Colors.Debug.GizmoBounds;
+        Gizmos.color = Colors.GUI.GizmoBounds;
         Gizmos.DrawLine(transform.position, m_Target.position);
         Gizmos.DrawRay(m_Target.position, m_OffsetPose.position);
       }

@@ -277,7 +277,7 @@ namespace PyroDK
 
     public string ReadableName
     {
-      get => m_ReadableName;
+      get => m_ReadableName.IsEmpty() ? Strings.ExpandCamelCase(name) : m_ReadableName;
       set => m_ReadableName = value ?? string.Empty;
     }
 

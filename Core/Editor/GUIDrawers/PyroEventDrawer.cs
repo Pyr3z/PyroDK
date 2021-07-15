@@ -158,7 +158,7 @@ namespace PyroDK.Editor
           pos.yMax = total.yMax;
 
           if (state.Event.IsEnabled)
-            label.text = RichText.Color(state.EventLabel, Colors.Debug.Keyword);
+            label.text = RichText.Color(state.EventLabel, Colors.GUI.Keyword);
           else
             label.text = state.EventLabel;
 

@@ -228,7 +228,7 @@ namespace PyroDK.Game3D
     {
       (Vector3 c1, Vector3 c2) result = (caps.center, caps.center);
 
-      float offset = caps.height / 2.0f - caps.radius;
+      float offset = caps.height / 2f - caps.radius;
 
       result.c1[caps.direction] += offset;
       result.c2[caps.direction] -= offset;
@@ -243,10 +243,25 @@ namespace PyroDK.Game3D
     {
       (Vector3 c1, Vector3 c2) result = (caps.center, caps.center);
 
-      float offset = caps.height / 2.0f - caps.radius;
+      float offset = caps.height / 2f - caps.radius;
 
       result.c1[caps.direction] += offset;
       result.c2[caps.direction] -= offset;
+
+      return result;
+    }
+
+    // TODO move to Game2D
+    public static (Vector3 c1, Vector3 c2) CapsuleCentersLocal(CapsuleCollider2D caps)
+    {
+      (Vector3 c1, Vector3 c2) result = (caps.offset, caps.offset);
+
+      int dir = (int)caps.direction;
+
+      float offset = caps.size[dir] / 2f - caps.size[dir.NOT()];
+
+      result.c1[dir] += offset;
+      result.c2[dir] -= offset;
 
       return result;
     }

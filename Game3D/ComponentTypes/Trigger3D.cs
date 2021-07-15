@@ -16,160 +16,135 @@ using UnityEngine;
 namespace PyroDK.Game3D
 {
 
-  [System.Serializable]
-  public sealed class ColliderEvent : PyroEvent<Collider>
-  {
-  }
-
-
   [RequireComponent(typeof(Collider))]
   [AddComponentMenu("PyroDK/Game3D/Collider Trigger (3D)")]
-  public class Trigger3D : BaseComponent
+  public sealed class Trigger3D : BaseComponent
   {
 
   [Header("Target Requirements")]
     [SerializeField]
-    protected LayerMask m_ValidLayers = LayerMasks.Disabled;
+    private LayerMask m_ValidLayers = LayerMasks.Disabled;
     [SerializeField] [GameObjectTag]
-    protected string    m_ValidTag;
-    [SerializeField]
-    protected bool      m_SeekInactiveTriggers = false;
+    private string m_ValidTag;
 
   [Header("Callback Hooks")]
     [SerializeField]
-    protected ColliderEvent m_OnTriggerEnter;
-    [Space]
+    private GameObjectEvent m_OnTriggerEnter;
     [SerializeField]
-    protected ColliderEvent m_OnTriggerExit;
-
-
-  [Header("[DebugOnly]")]
-    [SerializeField]
-    protected Color32 m_GizmoColor = Colors.Debug.GizmoTrigger;
-    [SerializeField] [ReadOnly]
-    protected List<Collider> m_Triggers = new List<Collider>();
+    private GameObjectEvent m_OnTriggerExit;
 
 
     [System.NonSerialized]
-    protected HashSet<GameObject> m_UniqueTargets = new HashSet<GameObject>();
+    private HashSet<GameObject> m_UniqueTargets = new HashSet<GameObject>();
 
 
-    public bool IsValidTarget(GameObject target)
+    public bool IsValidTarget(GameObject root)
     {
-      return (!m_ValidLayers.IsEnabled() || m_ValidLayers.Contains(target)) &&
-             (m_ValidTag.IsEmpty()       || target.CompareTag(m_ValidTag));
-    }
-
-    public bool Contains(GameObject obj)
-    {
-      return m_UniqueTargets.Contains(obj.transform.root.gameObject);
+      return root && (!m_ValidLayers.IsEnabled() || m_ValidLayers.Contains(root)) &&
+                     ( m_ValidTag.IsEmpty()      || root.CompareTag(m_ValidTag));
     }
 
 
 
-    protected void OnTriggerEnter(Collider other)
+    private void OnTriggerEnter(Collider other)
     {
-      if (TryAddTarget(other))
+      var root = other.transform.root.gameObject;
+
+      if (isActiveAndEnabled && IsValidTarget(root) && m_UniqueTargets.Add(root))
       {
-        m_OnTriggerEnter.TryInvoke(other);
+        m_OnTriggerEnter.Invoke(root);
       }
     }
 
-    protected void OnTriggerExit(Collider other)
+    private void OnTriggerExit(Collider other)
     {
-      if (TryRemoveTarget(other))
+      var root = other.transform.root.gameObject;
+
+      if (m_UniqueTargets.Remove(root) && isActiveAndEnabled)
       {
-        m_OnTriggerExit.TryInvoke(other);
+        m_OnTriggerExit.Invoke(root);
       }
     }
 
-
-    protected void OnDisable()
-    {
-      m_UniqueTargets.Clear();
-    }
-
-
-    protected bool TryAddTarget(Collider target)
-    {
-      var root = target.transform.root.gameObject;
-      return isActiveAndEnabled && IsValidTarget(root) && m_UniqueTargets.Add(root);
-    }
-
-    protected bool TryRemoveTarget(Collider target)
-    {
-      var root = target.transform.root.gameObject;
-      return m_UniqueTargets.Remove(root) && isActiveAndEnabled;
-    }
-
-
-    protected void FlushDeadTargets()
+    private void FixedUpdate()
     {
       if (m_UniqueTargets.Count == 0)
         return;
 
       m_UniqueTargets.RemoveWhere(ShouldRemoveTarget);
     }
-
-    protected bool ShouldRemoveTarget(GameObject obj)
+    private bool ShouldRemoveTarget(GameObject root)
     {
-      return !obj || !IsValidTarget(obj);
-    }
-
-
-    protected void PopulateTriggers()
-    {
-      GetComponentsInChildren(true, m_Triggers);
-
-      for (int i = m_Triggers.Count - 1; i >= 0; --i)
+      if (!root || !IsValidTarget(root))
       {
-        if (!m_Triggers[i].isTrigger || (!m_SeekInactiveTriggers && !m_Triggers[i].enabled))
-        {
-          m_Triggers.RemoveAt(i);
-        }
+        m_OnTriggerExit.Invoke(root);
+        return true;
       }
+
+      return false;
+    }
+
+    private void OnDisable()
+    {
+      m_UniqueTargets.Clear();
     }
 
 
+    #if DEBUG
 
-    protected void OnDrawGizmos()
+  [Header("[DebugOnly]")]
+    [SerializeField]
+    private Color32 m_GizmoColor = Colors.GUI.GizmoTrigger;
+    [SerializeField] [ReadOnly]
+    private List<Collider> m_Triggers = new List<Collider>();
+
+
+    private void OnValidate()
     {
-      if (m_GizmoColor.a == 0x00)
+      GetComponentsInChildren(includeInactive: true, m_Triggers);
+      m_Triggers.RemoveAll((collider) => !collider.isTrigger);
+    }
+    
+    private void OnDrawGizmos()
+    {
+      if (m_Triggers.IsEmpty() || m_GizmoColor.IsClear())
         return;
-
-      if (m_Triggers.Count == 0)
-      {
-        PopulateTriggers();
-      }
 
       bool is_enabled = isActiveAndEnabled;
 
-      foreach (var coll in m_Triggers)
+      foreach (var trig in m_Triggers)
       {
-        Gizmos.color = ( is_enabled && coll.enabled ) ? m_GizmoColor : m_GizmoColor.ToGrayscale().AlphaWash();
+        if (!trig)
+          continue;
 
-        if (coll is SphereCollider sphere)
+        if (is_enabled && trig.enabled)
+          Gizmos.color = m_GizmoColor;
+        else
+          Gizmos.color = m_GizmoColor.ToGrayscale().AlphaWash();
+
+        if (trig is SphereCollider sphere)
         {
-          Gizmos.matrix = coll.transform.localToWorldMatrix;
+          Gizmos.matrix = trig.transform.localToWorldMatrix;
           Gizmos.DrawWireSphere(sphere.center, sphere.radius);
         }
-        else if (coll is CapsuleCollider cap)
+        else if (trig is CapsuleCollider cap)
         {
           var (c1, c2) = CharacterMobility.CapsuleCentersLocal(cap);
+          float radius = cap.radius + 0.025f;
 
-          Gizmos.matrix = coll.transform.localToWorldMatrix;
-
-          Gizmos.DrawWireSphere(c1, cap.radius + 0.025f);
-          Gizmos.DrawWireSphere(c2, cap.radius + 0.025f);
+          Gizmos.matrix = trig.transform.localToWorldMatrix;
+          Gizmos.DrawWireSphere(c1, radius);
+          Gizmos.DrawWireSphere(c2, radius);
         }
         else
         {
-          var bounds = coll.bounds;
+          var bounds = trig.bounds;
           Gizmos.DrawWireCube(bounds.center, bounds.size);
         }
       }
     }
+    #endif // DEBUG
 
-  }
+  } // end class Trigger3D
 
 }

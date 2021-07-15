@@ -444,20 +444,37 @@ namespace PyroDK.Editor
     }
 
 
-    public static bool IsContextClick(in Rect pos, bool ignore_disabled = true)
+    public static bool IsContextClick(in Rect pos)
     {
-      if (!GUI.enabled && !ignore_disabled)
-        return false;
+      //if (!GUI.enabled)
+      //  return false;
 
       bool enabled = GUI.enabled;
       GUI.enabled = true;
 
-      ignore_disabled = Event.current.type == EventType.ContextClick &&
-                        pos.Contains(Event.current.mousePosition);
-
+      bool is_context_click = Event.current.type == EventType.ContextClick &&
+                              pos.Contains(Event.current.mousePosition);
       GUI.enabled = enabled;
 
-      return ignore_disabled;
+      return is_context_click;
+    }
+
+    public static bool IsContextClick(in Rect pos, Color32 outline, Color32 outline_hover = default)
+    {
+      if (Event.current.alt)
+      {
+        // intentionally nothing
+      }
+      else if (!outline_hover.IsClear() && pos.Contains(Event.current.mousePosition))
+      {
+        DrawRect(in pos, outline_hover);
+      }
+      else if (!outline.IsClear())
+      {
+        DrawRect(in pos, outline);
+      }
+
+      return IsContextClick(in pos);
     }
 
 
@@ -472,10 +489,13 @@ namespace PyroDK.Editor
 
     public static Rect MakeFieldRectStrict(in Rect total)
     {
-      return new Rect(x:      FieldStartX,
+      return new Rect(x:      total.x + EditorGUIUtility.labelWidth + STD_PAD,
                       y:      total.y,
-                      width:  FieldWidth,
-                      height: STD_LINE_HEIGHT);
+                      width:  1f,
+                      height: total.height)
+      {
+        xMax = total.xMax
+      };
     }
 
     public static Rect MakeFieldRectLax(in Rect total)
@@ -1172,8 +1192,8 @@ namespace PyroDK.Editor
 
     public static void DrawRect(in Rect pos, Color32 outline, Color32 fill = default)
     {
-      if (Event.current.type != EventType.Repaint)
-        return;
+      //if (Event.current.type != EventType.Repaint)
+      //  return;
 
       Handles.BeginGUI();
 

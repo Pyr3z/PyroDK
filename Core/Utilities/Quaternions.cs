@@ -58,22 +58,30 @@ namespace PyroDK
 
     public static bool IsRotation(in this Quaternion q)
     {
-      return (q.x * q.x + q.y * q.y + q.z * q.z + q.w * q.w).Approximately(1.0f);
+      return ( q.x * q.x +
+               q.y * q.y +
+               q.z * q.z +
+               q.w * q.w ).Approximately(1f);
     }
 
 
-    public static Vector3 ToEuler180(this Quaternion q)
+    public static Vector4 ToVec4(in this Quaternion q)
+    {
+      return new Vector4(q.x, q.y, q.z, q.w);
+    }
+
+    public static Vector3 ToEuler180(in this Quaternion q)
     {
       var v = q.eulerAngles;
 
-      if (v.x > 180.0f)
-        v.x -= 360.0f;
+      if (v.x > 180f)
+        v.x -= 360f;
 
-      if (v.y > 180.0f)
-        v.y -= 360.0f;
+      if (v.y > 180f)
+        v.y -= 360f;
 
-      if (v.z > 180.0f)
-        v.z -= 360.0f;
+      if (v.z > 180f)
+        v.z -= 360f;
 
       return v;
     }
@@ -131,12 +139,12 @@ namespace PyroDK
 
     public static void SmoothSet(ref this Quaternion q, in Quaternion set)
     {
-      q = Quaternion.RotateTowards(q, set, 180.0f);
+      q = Quaternion.RotateTowards(q, set, 180f);
     }
 
     public static void SmoothSetEulers(ref this Quaternion q, in Vector3 eulers)
     {
-      q = Quaternion.RotateTowards(q, Quaternion.Euler(eulers), 180.0f);
+      q = Quaternion.RotateTowards(q, Quaternion.Euler(eulers), 180f);
     }
 
 

@@ -44,18 +44,34 @@ namespace PyroDK.Editor
 
       private bool InjectSpawnableButtons(SerializedProperty prop_it)
       {
-        if (m_Spawnable.Owner)
-        {
-          _ = EditorGUILayout.ObjectField("Owned By:", m_Spawnable.Owner, typeof(SpawnPool), allowSceneObjects: false);
-        }
-        else
-        {
-          EditorGUILayout.SelectableLabel("(NOT owned by any SpawnPool)");
-        }
-
         var rect = GUILayoutUtility.GetRect(GUIDrawers.STD_LINE_HEIGHT,
                                             GUIDrawers.STD_LINE_HEIGHT,
                                             GUILayout.ExpandWidth(true));
+        if (m_Spawnable.Owner)
+        {
+          EditorGUI.ObjectField(rect, "Owned By:", m_Spawnable.Owner, typeof(SpawnPool), allowSceneObjects: false);
+        }
+        else
+        {
+          GUI.Label(rect, $"(Not owned by any {TSpy<SpawnPool>.LogName})", Styles.LabelDetail);
+        }
+
+        rect = GUILayoutUtility.GetRect(GUIDrawers.STD_LINE_HEIGHT,
+                                        GUIDrawers.STD_LINE_HEIGHT,
+                                        GUILayout.ExpandWidth(true));
+        if (m_Spawnable.Spawner)
+        {
+          EditorGUI.ObjectField(rect, "Spawned By:", m_Spawnable.Spawner, typeof(GameObject), allowSceneObjects: true);
+        }
+        else
+        {
+          GUI.Label(rect, "(No Spawner — manually instanced)", Styles.LabelDetail);
+        }
+
+        rect = GUILayoutUtility.GetRect(GUIDrawers.STD_LINE_HEIGHT,
+                                        GUIDrawers.STD_LINE_HEIGHT,
+                                        GUILayout.ExpandWidth(true));
+
         float xmax = rect.xMax;
         rect.width = ( rect.width - GUIDrawers.STD_PAD ) / 2f;
 

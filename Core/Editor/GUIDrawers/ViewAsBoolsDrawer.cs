@@ -59,7 +59,8 @@ namespace PyroDK.Editor
         else if (attr.EnumType != null)
         {
           string value_label = Enum.ToObject(attr.EnumType, prop.longValue).ToString();
-          InfoField(field, value_label, Styles.NumberInfo);
+          //InfoField(field, value_label, Styles.NumberInfo);
+          GUI.Label(field, value_label, Styles.TextDetailLeft);
         }
 
         EditorGUI.EndProperty();

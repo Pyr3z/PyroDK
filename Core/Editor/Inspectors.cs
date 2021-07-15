@@ -43,17 +43,16 @@ namespace PyroDK.Editor
     public abstract class BaseInspector : UnityEditor.Editor
     {
 
-      protected override void OnHeaderGUI()
+      protected override void OnHeaderGUI() // only shows for Assets
       {
-        GUILayout.BeginVertical(Styles.TitleBox);
+        GUILayout.BeginHorizontal(Styles.TitleBox);
+        GUILayout.BeginVertical(Styles.Section);
 
         string prepath = PATH_UNAVAILABLE;
-        string name    = s_CurrentObjectName;
         string type    = $"<{target.GetType().GetRichLogName()}>";
 
-        float width  = GUIDrawers.ContentWidth;
-        float name_w = Styles.TitleText.CalcWidth(name) + GUIDrawers.STD_PAD;
-        float type_w = Styles.TitleText.CalcWidth(type) + GUIDrawers.STD_PAD;
+        float name_w = Styles.TitleText.CalcWidth(s_CurrentObjectName) + 4f;
+        float type_w = Styles.TitleText.CalcWidth(type);
 
         if (!s_CurrentObjectPath.IsEmpty())
         {
@@ -65,43 +64,54 @@ namespace PyroDK.Editor
             prepath = s_CurrentObjectPath;
         }
 
-        var rect = GUILayoutUtility.GetRect(width, Styles.TitleTextSmall.lineHeight);
+        float line = Styles.TitleTextSmall.lineHeight;
 
-        GUI.Box(rect, string.Empty, Styles.Section);
+        var total = GUILayoutUtility.GetRect(width: line,
+                                            height: line + 2f * GUIDrawers.STD_LINE_ADVANCE + 6f,
+                                                    GUILayout.ExpandWidth(true));
+
+        var rect = new Rect(total.x, total.y, total.width, line);
         GUI.Label(rect, prepath, Styles.TitleTextSmall);
 
-        float ymin = rect.yMin;
+        rect.y += rect.height + 2f;
+        rect.height = GUIDrawers.STD_LINE_HEIGHT;
 
-        rect = GUILayoutUtility.GetRect(width, 1.5f * Styles.TitleText.lineHeight);
-        width = rect.width;
+        float width = rect.width;
 
-        if (name_w + type_w < width + GUIDrawers.STD_PAD_RIGHT)
+        if (name_w + type_w < width)
         {
           rect.width = name_w;
-          GUI.Label(rect, name, Styles.TitleText);
+          //rect.x += 2f + (total.width - name_w) / 2f;
+          rect.x = GUIDrawers.FieldStartX;
+          GUI.Label(rect, s_CurrentObjectName, Styles.TitleText);
 
-          rect.width = width;
-          rect.xMin = rect.xMax - type_w;
+          // we can fit the type too:
+          rect.xMin = total.xMax - type_w;
+          rect.xMax = total.xMax;
+          rect.yMax = total.yMax;
+          rect.yMin = total.yMax - GUIDrawers.STD_LINE_ADVANCE;
           GUI.Label(rect, type, Styles.TitleText);
         }
         else
         {
-          GUI.Label(rect, name, Styles.TitleText);
+          GUI.Label(rect, s_CurrentObjectName, Styles.TitleText);
+          rect.yMax = total.yMax;
+          rect.yMin = total.yMax - GUIDrawers.STD_LINE_ADVANCE;
         }
 
-        rect.xMin = rect.xMax - width;
-        rect.yMin = ymin;
-        if (GUIDrawers.IsContextClick(rect))
-        {
-          HeaderContextMenu().ShowAsContext();
-        }
+        rect.xMin = total.xMin;
+        rect.xMax = total.xMax;
 
-        GUIDrawers.LayoutSeparator(3f);
-
-        rect = EditorGUILayout.GetControlRect(hasLabel: false, GUILayout.Height(GUIDrawers.STD_LINE_HEIGHT));
         PreloadedAssetToggle(rect);
 
         GUILayout.EndVertical();
+        GUILayout.EndHorizontal();
+
+        if (GUIDrawers.IsContextClick(total))
+        {
+          HeaderContextMenu()
+            .ShowAsContext();
+        }
       }
 
       private GenericMenu HeaderContextMenu()
@@ -131,7 +141,7 @@ namespace PyroDK.Editor
 
         bool is_preloaded = AssetObjects.IsPreloadedAsset(target);
 
-        rect.xMin += rect.width - Styles.Label.CalcWidth(LABEL) - GUIDrawers.STD_PAD - GUIDrawers.STD_TOGGLE_W;
+        //rect.xMin += rect.width - Styles.Label.CalcWidth(LABEL) - GUIDrawers.STD_PAD - GUIDrawers.STD_TOGGLE_W;
 
         bool edit = EditorGUI.ToggleLeft(rect, LABEL, is_preloaded, Styles.Label);
 
@@ -153,6 +163,8 @@ namespace PyroDK.Editor
       // handle implied "m_Script" that we KNOW is the first serialized property:
       if (Logging.Assert(curr_prop.NextVisible(true) && curr_prop.propertyPath == "m_Script"))
         return;
+
+      var script = curr_prop.objectReferenceValue;
 
       #if USE_DEPRECATED_ADDRESSES
       // handle "m_ObjectAddress" that all IObjects will have:
@@ -179,29 +191,39 @@ namespace PyroDK.Editor
           total_height += GUIDrawers.STD_PAD + Styles.TextDetail.lineHeight;
         }
         
-        var rect = GUILayoutUtility.GetRect(total_width, total_height);
-        rect.xMin -= GUIDrawers.STD_INDENT;
+        var total = GUILayoutUtility.GetRect(total_width, total_height);
+        total.xMin -= GUIDrawers.STD_INDENT;
 
-        rect.height = path_height;
+        var rect = new Rect(total.x,
+                            total.y,
+                            total.width,
+                            path_height);
+
         GUI.Label(rect, s_CurrentObjectPath, Styles.TextInfoSmall);
 
         if (do_namespace_line)
         {
-          rect.height = total_height;
-          rect.yMin = rect.yMax - Styles.TextDetail.lineHeight - GUIDrawers.STD_PAD;
+          rect.yMax = total.yMax;
+          rect.yMin = total.yMax - Styles.TextDetail.lineHeight - 2f;
           GUI.Label(rect, RichText.Color(type.Namespace, Colors.Debug.Log), Styles.TextDetail);
         }
 
         GUILayout.EndVertical();
 
-        if (GUIDrawers.IsContextClick(rect, ignore_disabled: true))
+        if (GUIDrawers.IsContextClick(total, Colors.None, Colors.GUI.Comment))
         {
-          // TODO fix this up, more love
-          var script = AssetDatabase.GetAssetPath(sobj.FindProperty("m_Script").objectReferenceValue);
-          EditorUtility.OpenWithDefaultApp(script);
-        }
+          using (var keeper = Labels.Borrow("Select Script"))
+          {
+            var menu = new GenericMenu();
 
-        GUIDrawers.LayoutSeparator(4f);
+            menu.AddItem(keeper[0], on: false, () =>
+            {
+              Selection.activeObject = script;
+            });
+
+            menu.ShowAsContext();
+          }
+        }
       }
 
       // move on to the rest of the properties:
@@ -250,14 +272,14 @@ namespace PyroDK.Editor
         int bar = obj_path.IndexOf('|') + 1;
         if (bar > 0)
         {
-          string scene = RichText.Color(obj_path.Remove(bar), Colors.Debug.TypeByVal);
+          string scene = RichText.Color(obj_path.Remove(bar), Colors.GUI.TypeByVal);
           obj_path = scene + obj_path.Substring(bar);
         }
 
         int brack = obj_path.LastIndexOf('<');
         if (brack > 0)
         {
-          string type = RichText.Color(obj_path.Substring(brack), Colors.Debug.TypeByRef);
+          string type = RichText.Color(obj_path.Substring(brack), Colors.GUI.TypeByRef);
           obj_path = obj_path.Remove(brack) + type;
         }
       }

@@ -79,21 +79,21 @@ namespace PyroDK
     public static string GetRichLogName(this Type type)
     {
       if (type == null)
-        return RichText.Color("<null>", Colors.Debug.TypeByRef);
+        return RichText.Color("<null>", Colors.GUI.TypeByRef);
 
       if (type.IsValueType)
-        return RichText.TypeName(type, Colors.Debug.TypeByVal);
+        return RichText.TypeName(type, Colors.GUI.TypeByVal);
 
       if (TSpy<System.Attribute>.IsBaseClassOf(type))
         return RichText.Attribute(type);
 
-      return RichText.TypeName(type, Colors.Debug.TypeByRef);
+      return RichText.TypeName(type, Colors.GUI.TypeByRef);
     }
 
     public static string GetRichLogName(object obj)
     {
       if (obj == null)
-        return RichText.Color("null", Colors.Debug.Keyword);
+        return RichText.Color("null", Colors.GUI.Keyword);
       else
         return GetRichLogName(obj.GetType());
     }

@@ -51,12 +51,12 @@ namespace PyroDK
     public static int FontSizeSmall = 10;
 
 
-    public static readonly string True  = Color("true",  Colors.Debug.Keyword);
-    public static readonly string False = Color("false", Colors.Debug.Keyword);
+    public static readonly string True  = Color("true",  Colors.GUI.Keyword);
+    public static readonly string False = Color("false", Colors.GUI.Keyword);
 
-    public static readonly string Null  = Color("null",  Colors.Debug.Keyword);
+    public static readonly string Null  = Color("null",  Colors.GUI.Keyword);
 
-    public static readonly string EmptyStringLiteral = Color("\"\"", Colors.Debug.String);
+    public static readonly string EmptyStringLiteral = Color("\"\"", Colors.GUI.String);
 
 
     public static string Make(string text, Style style, Color32 color)
@@ -176,7 +176,7 @@ namespace PyroDK
     public static StringBuilder AppendColoredStringLiterals(this StringBuilder strb, string text)
     {
       return strb.AppendColoredRegions(text:        text,
-                                       color:       Colors.Debug.String,
+                                       color:       Colors.GUI.String,
                                        brack0:      '\"',
                                        brack1:      '\"',
                                        skip_angles: true);
@@ -185,7 +185,7 @@ namespace PyroDK
     public static StringBuilder AppendColoredTypeNames(this StringBuilder strb, string text)
     {
       return strb.AppendColoredRegions(text:        text,
-                                       color:       Colors.Debug.TypeByRef,
+                                       color:       Colors.GUI.TypeByRef,
                                        brack0:      '<',
                                        brack1:      '>',
                                        skip_angles: false);
@@ -230,7 +230,7 @@ namespace PyroDK
 
     public static string Attribute(Type attr_type)
     {
-      return Attribute(attr_type, Colors.Debug.TypeByRef);
+      return Attribute(attr_type, Colors.GUI.TypeByRef);
     }
 
     public static string Attribute(Type attr_type, Color32 color)
@@ -245,12 +245,12 @@ namespace PyroDK
 
     public static string Attribute(string name)
     {
-      return $"<b>[{Color(name, Colors.Debug.TypeByRef)}]</b>";
+      return $"<b>[{Color(name, Colors.GUI.TypeByRef)}]</b>";
     }
 
     public static string Attribute(string name, object param0)
     {
-      return $"<b>[{Color(name, Colors.Debug.TypeByRef)}({param0})]</b>";
+      return $"<b>[{Color(name, Colors.GUI.TypeByRef)}({param0})]</b>";
     }
 
 
@@ -282,9 +282,9 @@ namespace PyroDK
         return EmptyStringLiteral;
 
       if (str[0] != '\"') // add quotes
-        return Color($"\"{str}\"", Colors.Debug.String);
+        return Color($"\"{str}\"", Colors.GUI.String);
 
-      return Color(str, Colors.Debug.String);
+      return Color(str, Colors.GUI.String);
     }
     public static string String(object obj)
     {
@@ -304,7 +304,7 @@ namespace PyroDK
       if (v == null)
         return Null;
 
-      return Color(v, Colors.Debug.Value);
+      return Color(v, Colors.GUI.Value);
     }
     public static string Value(string prefix, object value)
     {
@@ -312,35 +312,35 @@ namespace PyroDK
       if (v == null)
         return prefix + Null;
 
-      return prefix + Color(v, Colors.Debug.Value);
+      return prefix + Color(v, Colors.GUI.Value);
     }
 
     public static string Value<T>(T value)
       where T : struct
     {
-      return Color(value.ToString(), Colors.Debug.Value);
+      return Color(value.ToString(), Colors.GUI.Value);
     }
     public static string Value<T>(string prefix, T value)
       where T : struct
     {
-      return prefix + Color(value.ToString(), Colors.Debug.Value);
+      return prefix + Color(value.ToString(), Colors.GUI.Value);
     }
 
 
     public static string RefType(string class_name)
     {
       if (class_name.IsEmpty() || class_name[0] != '<')
-        return Color($"<{class_name}>", Colors.Debug.TypeByRef);
+        return Color($"<{class_name}>", Colors.GUI.TypeByRef);
 
-      return Color(class_name, Colors.Debug.TypeByRef);
+      return Color(class_name, Colors.GUI.TypeByRef);
     }
 
     public static string ValType(string struct_name)
     {
       if (struct_name.IsEmpty() || struct_name[0] != '<')
-        return Color($"<{struct_name}>", Colors.Debug.TypeByVal);
+        return Color($"<{struct_name}>", Colors.GUI.TypeByVal);
 
-      return Color(struct_name, Colors.Debug.TypeByVal);
+      return Color(struct_name, Colors.GUI.TypeByVal);
     }
 
 

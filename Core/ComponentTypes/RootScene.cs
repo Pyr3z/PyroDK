@@ -474,7 +474,7 @@ namespace PyroDK
 
       string text;
       if (sref)
-        text = $"{sref.Type}: {sref.ReadableName}";
+        text = $"{RichText.String(sref.ReadableName)} ({RichText.Value(sref.Type)})";
       else if (m_OwningScene && m_OwningScene.Type == m_ShowReadableNameFor)
         text = m_OwningScene.ReadableName;
       else
@@ -493,7 +493,7 @@ namespace PyroDK
 
       GUIUtility.ScaleAroundPivot(scale, pivot);
 
-      GUI.color = Colors.Debug.String;
+      GUI.color = Colors.GUI.Text;
       GUI.Box(rect, text);
     }
     #endif

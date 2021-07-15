@@ -138,9 +138,17 @@ namespace PyroDK.Editor
         title.fontStyle =
           FontStyle.Bold;
 
-        textfield.SetTextColor(Colors.Debug.Value);
-        popup.SetTextColor(Colors.Debug.Value);
-        title.SetTextColor(Colors.Grey, StyleState.Normal);
+        ctrl_label
+          .SetTextColor(Colors.GUI.Text);
+
+        textfield
+          .SetTextColor(Colors.GUI.Value);
+
+        popup
+          .SetTextColor(Colors.GUI.Value);
+
+        title
+          .SetTextColor(Colors.GUI.TextDim);
 
         return true;
       }
@@ -195,7 +203,7 @@ namespace PyroDK.Editor
     public static readonly GUIStyle Section = new GUIStyle()
     {
       name = "PyroSection",
-      overflow = new RectOffset(18, 4, 4, 0),
+      overflow = new RectOffset(22, 22, 4, 2),
     } .SetBackgroundTexture(Textures.SectionBG);
 
     public static readonly GUIStyle Box = new GUIStyle()
@@ -263,7 +271,7 @@ namespace PyroDK.Editor
         wordWrap = false,
         font = PyroLabelFont,
         fontSize = 12,
-      };
+      } .SetTextColor(Colors.GUI.Text);
 
       s_LabelCenter = new GUIStyle(s_Label)
       {
@@ -302,7 +310,7 @@ namespace PyroDK.Editor
         wordWrap = false,
         font = PyroMonoFont,
         fontSize = 10,
-      };
+      } .SetTextColor(Colors.GUI.TextDim);
 
       s_TextDetailCenter = new GUIStyle(s_TextDetail)
       {
@@ -318,7 +326,7 @@ namespace PyroDK.Editor
       {
         fontSize = 11,
         font = PyroMonoFont,
-      } .SetTextColor(Colors.Debug.String);
+      } .SetTextColor(Colors.GUI.String);
 
       s_TextFieldMulti = new GUIStyle(s_TextField)
       {
@@ -329,16 +337,16 @@ namespace PyroDK.Editor
         .SetTextColor(Colors.Debug.Attention);
 
       s_TextFieldGood = new GUIStyle(s_TextField)
-        .SetTextColor(Colors.Debug.StringGood);
+        .SetTextColor(Colors.GUI.StringGood);
 
       s_TextFieldType = new GUIStyle(s_TextField)
-        .SetTextColor(Colors.Debug.TypeByRef);
+        .SetTextColor(Colors.GUI.TypeByRef);
 
       s_NumberField = new GUIStyle(Defaults.NumberField)
       {
         fontSize = 11,
         font = PyroMonoFont,
-      } .SetTextColor(Colors.Debug.Value);
+      } .SetTextColor(Colors.GUI.Value);
 
       s_NumberFieldBad = new GUIStyle(s_NumberField)
         .SetTextColor(Colors.Debug.Warning);
@@ -347,20 +355,20 @@ namespace PyroDK.Editor
       {
         fontSize = 11,
         font = PyroMonoFont,
-      } .SetTextColor(Colors.Debug.Value);
+      } .SetTextColor(Colors.GUI.Value);
 
       s_NumberInfoBad = new GUIStyle(s_NumberInfo)
       {
         fontStyle = FontStyle.Bold,
-      } .SetTextColor(Colors.Debug.String);
+      } .SetTextColor(Colors.GUI.String);
 
       s_PathField = new GUIStyle(s_TextField)
       {
         fontSize = 10,
-      } .SetTextColor(Colors.Debug.StringGood);
+      } .SetTextColor(Colors.GUI.StringGood);
 
       s_PathFieldExists = new GUIStyle(s_PathField)
-        .SetTextColor(Colors.Debug.Value);
+        .SetTextColor(Colors.GUI.Value);
 
       s_PathFieldInvalid = new GUIStyle(s_PathField)
         .SetTextColor(Colors.Debug.Error);
@@ -382,7 +390,7 @@ namespace PyroDK.Editor
       {
         richText = true,
         clipping = TextClipping.Clip,
-        fixedHeight = GUIDrawers.STD_LINE_HEIGHT,
+        fixedHeight = GUIDrawers.STD_LINE_HEIGHT + 2f,
         padding = new RectOffset(4, 4, 1, 1),
         font = PyroLabelFont,
         fontStyle = FontStyle.Normal,
@@ -392,20 +400,23 @@ namespace PyroDK.Editor
 
       s_ButtonSmall = new GUIStyle(s_Button)
       {
-        fixedHeight = s_Button.fixedHeight - 2f,
+        fixedHeight = s_Button.fixedHeight - 4f,
         fontSize = 10,
       };
 
       s_ButtonBig = new GUIStyle(s_Button)
       {
-        fixedHeight = s_Button.fixedHeight * 2f - 2f,
+        fixedHeight = s_Button.fixedHeight * 2f - 4f,
         fontStyle = FontStyle.Bold,
         fontSize = 14,
       };
 
       s_TitleBox = new GUIStyle(Defaults.TitleBox)
       {
-        padding = new RectOffset(7, 0, 2, 4), // original: 4, 4, 7, 8
+        //stretchHeight = true,
+        padding = new RectOffset(4, 4, 4, 4), // original: 4, 4, 7, 8
+        margin = new RectOffset(0, 0, 0, 9),
+        //border = new RectOffset(4, 4, 4, 4),
       };
 
       s_TitleText = new GUIStyle(Defaults.TitleText)
@@ -418,14 +429,14 @@ namespace PyroDK.Editor
         fontSize = 14,
         font = PyroMonoFont,
         fixedHeight = 0f,
-      };
+      } .SetTextColor(Colors.GUI.TextDim);
 
       s_TitleTextSmall = new GUIStyle(s_TitleText)
       {
         fontStyle = FontStyle.Normal,
         alignment = TextAnchor.MiddleLeft,
         fontSize = 11,
-      } .SetTextColor(Colors.Debug.Value);
+      } .SetTextColor(Colors.GUI.Value.AlphaWash());
 
       s_Foldout = new GUIStyle(Defaults.Foldout)
       {

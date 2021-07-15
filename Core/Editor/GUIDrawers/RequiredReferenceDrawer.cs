@@ -27,21 +27,58 @@ namespace PyroDK.Editor
     private sealed class RequiredReferenceDrawer : PropertyDrawer
     {
 
+      private TriBool m_Highlight; // satisfied if false, disable if null
+
+
       public override void OnGUI(Rect total, SerializedProperty prop, GUIContent label)
       {
+        total.y += STD_PAD;
+        total.height -= STD_PAD;
+
         if (prop.propertyType != SerializedPropertyType.ObjectReference)
         {
           InvalidField(in total, label, $"{RichText.Attribute("RequiredReference")} requires an Object type!");
           return;
         }
 
-        var attr = (RequiredReferenceAttribute)attribute;
+        var suff = new Rect(total)
+        {
+          xMax = LabelEndX
+        };
 
-        var highlight = TriBool.True; // ignore if null, disable if false
+        if (m_Highlight)
+        {
+          var attr = (RequiredReferenceAttribute)attribute;
+          DrawRect(total.Expanded(STD_PAD), Colors.Debug.Attention, attr.Highlight);
+
+          GUI.Label(suff, s_RequiredSuffix, Styles.LabelDetail);
+        }
+        else
+        {
+          GUI.Label(suff, s_RequiredMetSuffix, Styles.LabelDetail);
+        }
+
+        EditorGUI.BeginDisabledGroup(m_Highlight == TriBool.Null);
+        _ = EditorGUI.PropertyField(total, prop, label);
+        EditorGUI.EndDisabledGroup();
+      }
+
+      public override float GetPropertyHeight(SerializedProperty prop, GUIContent label)
+      {
+        CheckConditions(prop);
+
+        return STD_LINE_HEIGHT + 2 * STD_PAD;
+      }
+
+
+      private void CheckConditions(SerializedProperty prop)
+      {
+        var attr = (RequiredReferenceAttribute)attribute;
+        m_Highlight = !prop.objectReferenceValue;
 
         if (attr.DisableIfPrefab && AssetObjects.IsInPrefabAsset(prop.serializedObject.targetObject))
         {
-          highlight = TriBool.False;
+          m_Highlight = TriBool.Null;
         }
         else if (!attr.IgnoreIfProperty.IsEmpty())
         {
@@ -53,11 +90,11 @@ namespace PyroDK.Editor
             {
               case SerializedPropertyType.Boolean:
                 if (!ifprop.boolValue)
-                  highlight = TriBool.Null;
+                  m_Highlight = TriBool.False;
                 break;
               case SerializedPropertyType.ObjectReference:
                 if (!ifprop.objectReferenceValue)
-                  highlight = TriBool.Null;
+                  m_Highlight = TriBool.False;
                 break;
             }
           }
@@ -67,31 +104,10 @@ namespace PyroDK.Editor
               .LogWarning(this);
           }
         }
-
-        if (highlight)
-        {
-          var suff = new Rect(total)
-          {
-            xMax = LabelEndX
-          };
-
-          if (!prop.objectReferenceValue)
-          {
-            DrawRect(total.Expanded(STD_PAD), Colors.Debug.Attention, attr.Highlight);
-            GUI.Label(suff, s_RequiredSuffix, Styles.LabelDetail);
-          }
-          else
-          {
-            GUI.Label(suff, s_RequiredMetSuffix, Styles.LabelDetail);
-          }
-        }
-
-        EditorGUI.BeginDisabledGroup(highlight == TriBool.False);
-        _ = EditorGUI.PropertyField(total, prop, label);
-        EditorGUI.EndDisabledGroup();
       }
 
-    }
+
+    } // end class RequiredReferenceDrawer
 
   }
 

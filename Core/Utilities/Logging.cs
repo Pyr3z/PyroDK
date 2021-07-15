@@ -193,7 +193,7 @@ namespace PyroDK
                                                     Color32 type_color  = default)
     {
       if (type_color.IsClear())
-        type_color = Colors.Debug.TypeByRef;
+        type_color = Colors.GUI.TypeByRef;
 
       string stacktrace_str;
       if (ctx is Type type_ctx)
@@ -253,7 +253,7 @@ namespace PyroDK
       Log<T>( RichText.Make(message, LOG_TAG_BORING_STYLE, Colors.Debug.Boring),
               ctx, full_stack,
               logtag:     LogBoringTag,
-              type_color: Colors.Debug.TypeByRef.Alpha(0x88));
+              type_color: Colors.GUI.TypeByRef.Alpha(0x88));
     }
 
     public static void LogWarning<T>(this string message, T ctx, bool full_stack = true)
