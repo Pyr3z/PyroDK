@@ -107,7 +107,7 @@ namespace PyroDK.Editor
         GUILayout.EndVertical();
         GUILayout.EndHorizontal();
 
-        if (GUIDrawers.IsContextClick(total))
+        if (GUIDrawers.IsAnyClick(total, Colors.None, Colors.GUI.Comment))
         {
           HeaderContextMenu()
             .ShowAsContext();
@@ -210,15 +210,20 @@ namespace PyroDK.Editor
 
         GUILayout.EndVertical();
 
-        if (GUIDrawers.IsContextClick(total, Colors.None, Colors.GUI.Comment))
+        if (GUIDrawers.IsAnyClick(total, Colors.None, Colors.GUI.Comment))
         {
-          using (var keeper = Labels.Borrow("Select Script"))
+          using (var keeper = Labels.Borrow("Select Script", "Copy Identifier"))
           {
             var menu = new GenericMenu();
 
             menu.AddItem(keeper[0], on: false, () =>
             {
               Selection.activeObject = script;
+            });
+
+            menu.AddItem(keeper[1], on: false, () =>
+            {
+              GUIUtility.systemCopyBuffer = RichText.RemoveSoberly(s_CurrentObjectPath);
             });
 
             menu.ShowAsContext();

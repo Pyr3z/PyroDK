@@ -444,26 +444,27 @@ namespace PyroDK.Editor
     }
 
 
-    public static bool IsContextClick(in Rect pos)
+    public static bool IsClick(in Rect pos, int button = 0)
     {
-      //if (!GUI.enabled)
-      //  return false;
+      if (Event.current.type != EventType.MouseDown)
+        return false;
 
       bool enabled = GUI.enabled;
       GUI.enabled = true;
 
-      bool is_context_click = Event.current.type == EventType.ContextClick &&
-                              pos.Contains(Event.current.mousePosition);
+      bool is_click = ( button == -1 || Event.current.button == button ) &&
+                        pos.Contains(Event.current.mousePosition);
+
       GUI.enabled = enabled;
 
-      return is_context_click;
+      return is_click;
     }
 
-    public static bool IsContextClick(in Rect pos, Color32 outline, Color32 outline_hover = default)
+    public static bool IsClick(in Rect pos, Color32 outline, Color32 outline_hover = default, int button = 0)
     {
-      if (Event.current.alt)
+      if (Event.current.alt || Event.current.type != EventType.Repaint)
       {
-        // intentionally nothing
+        //
       }
       else if (!outline_hover.IsClear() && pos.Contains(Event.current.mousePosition))
       {
@@ -474,7 +475,28 @@ namespace PyroDK.Editor
         DrawRect(in pos, outline);
       }
 
-      return IsContextClick(in pos);
+      return IsClick(in pos, button);
+    }
+
+
+    public static bool IsContextClick(in Rect pos)
+    {
+      return IsClick(in pos, button: 1);
+    }
+
+    public static bool IsContextClick(in Rect pos, Color32 outline, Color32 outline_hover = default)
+    {
+      return IsClick(in pos, outline, outline_hover, button: 1);
+    }
+
+    public static bool IsAnyClick(in Rect pos)
+    {
+      return IsClick(in pos, button: -1);
+    }
+
+    public static bool IsAnyClick(in Rect pos, Color32 outline, Color32 outline_hover = default)
+    {
+      return IsClick(in pos, outline, outline_hover, button: -1);
     }
 
 

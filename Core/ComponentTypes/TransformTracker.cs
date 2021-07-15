@@ -48,10 +48,10 @@ namespace PyroDK
 
     [SerializeField] [RequiredReference(color_hex: "#EEA02011")]
     private Transform   m_Target;
-    [SerializeField] [ViewAsBools]
-    private OptionFlags m_Options = OptionFlags.TrackPosition | OptionFlags.Update;
     [SerializeField] [Toggleable]
     private Pose        m_OffsetPose = Poses.Disabled;
+    [SerializeField] [ViewAsBools]
+    private OptionFlags m_Options = OptionFlags.TrackPosition | OptionFlags.Update;
 
     [System.NonSerialized]
     private System.Action m_UpdateCallback, m_FixedUpdateCallback, m_LateUpdateCallback;

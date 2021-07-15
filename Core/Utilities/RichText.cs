@@ -380,7 +380,10 @@ namespace PyroDK
 
     public static string Remove(string text)
     {
-      // probably a better way to do this but am dronk
+      // probably a better way to do this but am dronk.
+
+      // This does not handle <>-enclosed slugs that are not proper rich text tags!
+      // See "Sober" version below.
 
       if (text == null || text.Length < 3)
         return text;
@@ -401,6 +404,88 @@ namespace PyroDK
         {
           good_text = c == '>';
         }
+      }
+
+      return bob.ToString();
+    }
+
+
+    public static string RemoveSoberly(string text)
+    {
+      // this is a more sober attempt at the above method.
+
+      if (text == null || text.Length < 3)
+        return text;
+
+      var bob = new StringBuilder(text.Length / 2);
+
+      int i = 0, size = text.Length;
+
+      (int start, int end) lhs = (0, 0),
+                           rhs = (0, size - 1);
+
+      int found = 0; // 1 = found open, 2 = found pair
+      while (i < size)
+      {
+        if (text[i] == '<')
+        {
+          if (found == 0 && text[i + 1] != '/')
+          {
+            int lhs_end = i - 1;
+
+            while (++i < size)
+            {
+              if (text[i] == '>')
+              {
+                found     = 1;
+                lhs.end   = lhs_end;
+                rhs.start = i + 1;
+                break;
+              }
+            }
+          }
+          else if (found == 1 && text[i + 1] == '/')
+          {
+            int rhs_end = i - 1;
+
+            while (++i < size)
+            {
+              if (text[i] == '>')
+              {
+                found = 2;
+                rhs.end = rhs_end;
+                break;
+              }
+            }
+          }
+        }
+
+        ++i;
+
+        if (found == 2)
+        {
+          // by now, should have two matching tags.
+          // Append them and prepare for next loop:
+
+          lhs.end -= lhs.start - 1;
+          rhs.end -= rhs.start - 1;
+
+          if (lhs.end > 0)
+            bob.Append(text, lhs.start, lhs.end);
+          if (rhs.end > 0)
+            bob.Append(text, rhs.start, rhs.end);
+
+          lhs.start = i;
+          lhs.end   = i;
+          rhs.start = i;
+          rhs.end   = size - 1;
+          found     = 0;
+        }
+      } // end outermost while loop
+
+      if (found == 0 && (rhs.end -= rhs.start - 1) > 0)
+      {
+        bob.Append(text, rhs.start, rhs.end);
       }
 
       return bob.ToString();
