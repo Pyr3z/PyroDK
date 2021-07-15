@@ -20,7 +20,7 @@ namespace PyroDK.Editor
   {
 
     private static readonly string s_RequiredSuffix    = RichText.Color("(required)", Colors.Yellow);
-    private static readonly string s_RequiredMetSuffix = RichText.Color("(required)", Colors.Grey.Alpha(0x90));
+    private static readonly string s_RequiredMetSuffix = RichText.Color("(required)", Colors.Gray.Alpha(0x90));
 
 
     [CustomPropertyDrawer(typeof(RequiredReferenceAttribute))]
@@ -32,9 +32,6 @@ namespace PyroDK.Editor
 
       public override void OnGUI(Rect total, SerializedProperty prop, GUIContent label)
       {
-        total.y += STD_PAD;
-        total.height -= STD_PAD;
-
         if (prop.propertyType != SerializedPropertyType.ObjectReference)
         {
           InvalidField(in total, label, $"{RichText.Attribute("RequiredReference")} requires an Object type!");
@@ -49,7 +46,18 @@ namespace PyroDK.Editor
         if (m_Highlight)
         {
           var attr = (RequiredReferenceAttribute)attribute;
-          DrawRect(total.Expanded(STD_PAD), Colors.Debug.Attention, attr.Highlight);
+
+          var high = new Rect(total.x - STD_INDENT,
+                              total.y,
+                              total.width + STD_INDENT + 3f,
+                              total.height);
+
+          if (high.Contains(Event.current.mousePosition))
+            DrawRect(high, Colors.Clear, attr.Highlight.Alpha(0x0C));
+          else
+            DrawRect(high, Colors.Clear, attr.Highlight);
+
+          label.text = RichText.Bold(label.text);
 
           GUI.Label(suff, s_RequiredSuffix, Styles.LabelDetail);
         }
@@ -59,7 +67,11 @@ namespace PyroDK.Editor
         }
 
         EditorGUI.BeginDisabledGroup(m_Highlight == TriBool.Null);
+
+        total.y += 3f;
+        total.height = STD_LINE_HEIGHT;
         _ = EditorGUI.PropertyField(total, prop, label);
+
         EditorGUI.EndDisabledGroup();
       }
 
@@ -67,7 +79,7 @@ namespace PyroDK.Editor
       {
         CheckConditions(prop);
 
-        return STD_LINE_HEIGHT + 2 * STD_PAD;
+        return STD_LINE_HEIGHT + 6f;
       }
 
 

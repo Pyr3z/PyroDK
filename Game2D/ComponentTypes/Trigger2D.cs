@@ -107,7 +107,6 @@ namespace PyroDK.Game2D
     [SerializeField] [ReadOnly]
     private List<Collider2D> m_Triggers = new List<Collider2D>();
 
-
     private void OnValidate()
     {
       GetComponentsInChildren(includeInactive: true, m_Triggers);
@@ -135,16 +134,31 @@ namespace PyroDK.Game2D
         {
           Gizmos.matrix = transform.localToWorldMatrix;
           Gizmos.DrawWireSphere(circ.offset, circ.radius);
+          Gizmos.matrix = Matrix4x4.identity;
         }
+#if false // disabled for lookin clunky
         else if (trig is CapsuleCollider2D cap)
         {
-          var (c1, c2) = Game3D.CharacterMobility.CapsuleCentersLocal(cap);
-          float radius = cap.size[((int)cap.direction).NOT()] / 2f + 0.025f;
-
           Gizmos.matrix = trig.transform.localToWorldMatrix;
-          Gizmos.DrawWireSphere(c1, radius);
-          Gizmos.DrawWireSphere(c2, radius);
+
+          int dir = Game3D.CharacterMobility.CapsuleCentersLocal(cap, out Vector3 c1, out Vector3 c2);
+          
+          if (dir == -1)
+          {
+            Gizmos.DrawWireSphere(c1, Mathf.Max(cap.size.x, cap.size.y) / 2f);
+          }
+          else
+          {
+            float r1 = cap.size[dir.NOT()] / 2f;
+
+            Gizmos.DrawWireSphere(c1, r1);
+            Gizmos.DrawWireSphere(c2, r1);
+          }
+
+          Gizmos.matrix = Matrix4x4.identity;
         }
+#endif
+        // TODO do BoxCollider2D
         else
         {
           var bounds = trig.bounds;

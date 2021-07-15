@@ -85,7 +85,7 @@ namespace PyroDK.Editor
       } // end class State
 
 
-      private static readonly string s_LabelSuffixDisabled = RichText.Color(" (event disabled)", Colors.Grey);
+      private static readonly string s_LabelSuffixDisabled = RichText.Color(" (event disabled)", Colors.Gray);
 
 
       public override void OnGUI(Rect total, SerializedProperty prop, GUIContent label)

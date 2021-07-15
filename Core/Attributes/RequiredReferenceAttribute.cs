@@ -19,7 +19,7 @@ namespace PyroDK
   [System.Diagnostics.Conditional("UNITY_EDITOR")]
   public class RequiredReferenceAttribute : PropertyAttribute
   {
-    public static readonly Color32 DEFAULT_COLOR = Colors.Debug.Attention.Alpha(0.375f);
+    public static readonly Color32 DEFAULT_COLOR = Colors.Debug.Attention.Alpha(0x3A);
 
 
     public bool   DisableIfPrefab = false;

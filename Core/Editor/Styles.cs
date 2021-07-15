@@ -285,8 +285,8 @@ namespace PyroDK.Editor
 
       s_LabelDetail = new GUIStyle(s_LabelRight)
       {
-        fontSize = 10,
-      };
+        fontSize = 11,
+      } .SetTextColor(Colors.GUI.TextDim);
 
       s_TextInfo = new GUIStyle(s_Label)
       {
@@ -295,7 +295,7 @@ namespace PyroDK.Editor
         clipping = TextClipping.Overflow,
         wordWrap = true,
         font = PyroMonoFont,
-      };
+      } .SetTextColor(Colors.GUI.TextDim);
 
       s_TextInfoSmall = new GUIStyle(s_TextInfo)
       {
@@ -391,11 +391,11 @@ namespace PyroDK.Editor
         richText = true,
         clipping = TextClipping.Clip,
         fixedHeight = GUIDrawers.STD_LINE_HEIGHT + 2f,
-        padding = new RectOffset(4, 4, 1, 1),
         font = PyroLabelFont,
         fontStyle = FontStyle.Normal,
         fontSize = 12,
         alignment = TextAnchor.MiddleCenter,
+        padding = new RectOffset(4, 4, 1, 1),
       };
 
       s_ButtonSmall = new GUIStyle(s_Button)
@@ -424,9 +424,9 @@ namespace PyroDK.Editor
         richText = true,
         wordWrap = false,
         clipping = TextClipping.Clip,
-        fontStyle = FontStyle.Bold,
+        fontStyle = FontStyle.Normal,
         alignment = TextAnchor.MiddleCenter,
-        fontSize = 14,
+        fontSize = 15,
         font = PyroMonoFont,
         fixedHeight = 0f,
       } .SetTextColor(Colors.GUI.TextDim);
@@ -568,9 +568,10 @@ namespace PyroDK.Editor
       return style.CalcHeight(Labels.Scratch, rect.width) <= rect.height;
     }
 
-    public static bool CalcFit(this GUIStyle style, string text)
+    public static bool CalcFitOneLine(this GUIStyle style, string text)
     {
-      return CalcFit(style, text, new Rect(0f, 0f, GUIDrawers.FieldWidth, GUIDrawers.STD_LINE_HEIGHT));
+      Labels.Scratch.text = text;
+      return style.CalcHeight(Labels.Scratch, GUIDrawers.ContentWidth) < 2f + style.lineHeight;
     }
 
 

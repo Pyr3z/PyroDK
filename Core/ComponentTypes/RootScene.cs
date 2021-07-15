@@ -192,11 +192,11 @@ namespace PyroDK
         }
       }
 
-      if (EverLoadedAny(SceneType.LayerSpace))
+      if (EverLoadedAny(SceneType.SubSpace))
       {
-        foreach (var layer in LoadedLayers())
+        foreach (var subspace in LoadedSubSpaces())
         {
-          _ = StartCoroutine(UnloadSpaceAsync(layer));
+          _ = StartCoroutine(UnloadSpaceAsync(subspace));
         }
       }
 
@@ -276,18 +276,18 @@ namespace PyroDK
       return m_SpaceIndices[(int)type] > 0;
     }
 
-    private IEnumerable<SceneRef> LoadedLayers()
+    private IEnumerable<SceneRef> LoadedSubSpaces()
     {
-      const uint LAYER_IDX = (uint)SceneType.LayerSpace;
+      const uint SUBSPACE = (uint)SceneType.SubSpace;
 
-      uint idx = m_SpaceIndices[LAYER_IDX];
+      uint idx = m_SpaceIndices[SUBSPACE];
 
       for (int i = 0; i < SZ_RING_BUFFER && idx > 0u; ++i)
       {
-        var layer = m_SpaceRefs[LAYER_IDX + idx-- % SZ_RING_BUFFER];
+        var subspace = m_SpaceRefs[SUBSPACE + idx-- % SZ_RING_BUFFER];
         
-        if (layer && layer.IsLoaded)
-          yield return layer;
+        if (subspace && subspace.IsLoaded)
+          yield return subspace;
       }
     }
 
@@ -297,14 +297,14 @@ namespace PyroDK
     }
     private bool SetClearing(SceneType type, bool set)
     {
-      if (type == SceneType.LayerSpace)
+      if (type == SceneType.SubSpace)
       {
         if (IsLoading(type))
           return false;
         else if (set)
-          --m_LoadStates[(int)SceneType.LayerSpace];
+          --m_LoadStates[(int)SceneType.SubSpace];
         else if (IsClearing(type))
-          ++m_LoadStates[(int)SceneType.LayerSpace];
+          ++m_LoadStates[(int)SceneType.SubSpace];
 
         return true;
       }
@@ -323,14 +323,14 @@ namespace PyroDK
     }
     private bool SetLoading(SceneType type, bool set)
     {
-      if (type == SceneType.LayerSpace)
+      if (type == SceneType.SubSpace)
       {
         if (IsClearing(type))
           return false;
         else if (set)
-          ++m_LoadStates[(int)SceneType.LayerSpace];
+          ++m_LoadStates[(int)SceneType.SubSpace];
         else if (IsLoading(type))
-          --m_LoadStates[(int)SceneType.LayerSpace];
+          --m_LoadStates[(int)SceneType.SubSpace];
 
         return true;
       }
@@ -374,7 +374,7 @@ namespace PyroDK
         yield break;
       }
 
-      if (type != SceneType.LayerSpace && CurrRef(type) && CurrRef(type).IsLoaded)
+      if (type != SceneType.SubSpace && CurrRef(type) && CurrRef(type).IsLoaded)
       {
         yield return UnloadSpaceAsync(CurrRef(type),  fadeout: fadeout,
                                                       loadbar: loadbar);

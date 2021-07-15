@@ -65,7 +65,7 @@ namespace PyroDK
       if (m_IsEnabled)
         m_Name = $"{RichText.Value((object)m_TriggerKey)} on {RichText.String(m_TriggerType)}";
       else
-        m_Name = RichText.Color($"{m_TriggerKey} on \"{m_TriggerType}\"", Colors.Grey);
+        m_Name = RichText.Color($"{m_TriggerKey} on \"{m_TriggerType}\"", Colors.Gray);
 
       return m_Name;
     }

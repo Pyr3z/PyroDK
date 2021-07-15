@@ -91,7 +91,7 @@ namespace PyroDK
     [SerializeField]
     private MinMaxFloat m_Value;
     [SerializeField]
-    private Color32     m_FillColor = Colors.Grey;
+    private Color32     m_FillColor = Colors.Gray;
     [SerializeField]
     private Event       m_OnValueChanged;
 

@@ -136,8 +136,8 @@ namespace PyroDK.Editor
     public const float STD_LINE_HEIGHT  = 18f; // EditorGUIUtility.singleLineHeight
     public const float STD_LINE_HALF    = STD_LINE_HEIGHT / 2f;
 
-    public const float STD_INDENT_0     = STD_LINE_HEIGHT;
-    public const float STD_INDENT       = STD_LINE_HEIGHT - 3f;
+    public const float STD_INDENT_0     = 18f;
+    public const float STD_INDENT       = 15f;
 
     public const float STD_PAD          = 2f; // == EditorGUIUtility.standardVerticalSpacing
     public const float STD_PAD_HALF     = STD_PAD / 2f;
@@ -145,14 +145,14 @@ namespace PyroDK.Editor
 
     public const float STD_LINE_ADVANCE = STD_LINE_HEIGHT + STD_PAD;
 
-    public const float STD_TOGGLE_W     = STD_LINE_HEIGHT - STD_PAD_HALF;
-    public const float STD_TOGGLE_H     = STD_LINE_HEIGHT + STD_PAD_HALF;
+    public const float STD_TOGGLE_W     = STD_LINE_HEIGHT - 1f;
+    public const float STD_TOGGLE_H     = STD_LINE_HEIGHT + 1f;
 
     public const float STD_BTN_W        = 14f;
     public const float STD_BTN_H        = 12f;
 
-    public const float MIN_TOGGLE_W     = STD_TOGGLE_W - STD_PAD;
-    public const float MIN_TOGGLE_H     = STD_TOGGLE_H - STD_PAD;
+    public const float MIN_TOGGLE_W     = STD_TOGGLE_W - 2f;
+    public const float MIN_TOGGLE_H     = STD_TOGGLE_H - 2f;
 
 
     public static readonly float ARRAY_INDEX_LABEL_WIDTH = Styles.NumberInfo.CalcWidth("[00]");
@@ -630,10 +630,8 @@ namespace PyroDK.Editor
 
     public static bool ToggledPrefixLabel(in Rect total, GUIContent label, bool on, out Rect field)
     {
-      //total.xMin = LabelStartX;
-
-      field = new Rect(x:      total.x - MIN_TOGGLE_W - STD_PAD + STD_INDENT * EditorGUI.indentLevel,
-                       y:      total.y,
+      field = new Rect(x:      total.x + (STD_INDENT * EditorGUI.indentLevel) - STD_PAD - MIN_TOGGLE_W,
+                       y:      total.y + STD_LINE_HEIGHT - MIN_TOGGLE_H,
                        width:  MIN_TOGGLE_W,
                        height: MIN_TOGGLE_H);
 
@@ -641,11 +639,14 @@ namespace PyroDK.Editor
       on = EditorGUI.Toggle(field, on);
       PopIndentLevel(fix_label_width: false);
 
+      int id = GUIUtility.GetControlID(FocusType.Keyboard, field);
+
       field.x      = field.xMax + STD_PAD;
+      field.y      = total.y;
       field.width  = EditorGUIUtility.labelWidth;
       field.height = STD_LINE_HEIGHT;
 
-      EditorGUI.HandlePrefixLabel(total, field, label, id: 0, Styles.Label);
+      EditorGUI.HandlePrefixLabel(total, field, label, id, Styles.Label);
 
       //if (on)
       //{
@@ -1247,13 +1248,13 @@ namespace PyroDK.Editor
       {
         DrawSingleLine(p0: new Vector2(pos.xMin, y),
                        p1: new Vector2(pos.xMax, y),
-                       color: Colors.Grey);
+                       color: Colors.Gray);
       }
       else
       {
         DrawSingleLine(p0: new Vector2(pos.xMin - STD_INDENT_0 + STD_PAD, y),
                        p1: new Vector2(pos.xMax, y),
-                       color: Colors.Grey);
+                       color: Colors.Gray);
       }
     }
 

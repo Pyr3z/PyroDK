@@ -19,17 +19,24 @@ namespace PyroDK.Editor
   public static partial class GUIDrawers
   {
 
-    private static readonly string s_DisabledPoseString = $"(This {TSpy<Pose>.LogName} is functionally disabled)";
+    private static readonly string s_DisabledPoseMessage = $"(This {TSpy<Pose>.LogName} is functionally disabled.)";
 
-    public static bool PoseField(Rect total, ref Pose current, GUIContent label, bool toggleable = true)
+    private static readonly string s_PositionLabel = RichText.Color("(position)", Colors.GUI.Value);
+    private static readonly string s_RotationLabel = RichText.Color("(rotation)", Colors.GUI.Value);
+
+    private static readonly float  s_PositionLabelWidth = Styles.Label.CalcWidth(s_PositionLabel);
+    private static readonly float  s_VectorLabelWidth = Styles.Label.CalcWidth("X");
+
+    public static bool PoseField(Rect total, ref Pose current, GUIContent label, bool toggleable)
     {
-      bool toggled = current.IsEnabled();
-      var  promise = Labels.Pool.MakePromiseIfNull(ref label);
-      Rect field;
-
-      EditorGUI.BeginDisabledGroup(Event.current.alt);
-      try
+      using (Labels.Pool.MakePromiseIfNull(ref label))
       {
+        if (label.text.IsEmpty())
+          label.text = "Pose";
+
+        bool toggled = current.IsEnabled();
+        Rect field;
+
         if (toggleable)
         {
           EditorGUI.BeginChangeCheck();
@@ -42,9 +49,10 @@ namespace PyroDK.Editor
             return true;
           }
 
-          if (!toggled && GUI.enabled)
+          if (!toggled)
           {
-            InfoField(field, s_DisabledPoseString, Styles.TextDetailCenter);
+            label.text = s_DisabledPoseMessage;
+            GUI.Label(field, label, Styles.TextInfoSmall);
             return false;
           }
         }
@@ -52,7 +60,7 @@ namespace PyroDK.Editor
         {
           field = PrefixLabelStrict(in total, label);
 
-          if (!toggled && GUI.enabled)
+          if (!toggled)
           {
             label.text = "Invalid Quaternion. Fix?";
             if (GUI.Button(field, label, Styles.ButtonSmall))
@@ -65,11 +73,31 @@ namespace PyroDK.Editor
           }
         }
 
+        bool do_labels =
+          field.xMin >= (total.x + Styles.Label.CalcWidth(label) + s_PositionLabelWidth + s_VectorLabelWidth + 6f);
+
+        if (do_labels)
+        {
+          field.xMin -= s_PositionLabelWidth + STD_PAD_RIGHT + s_VectorLabelWidth;
+          label.text = s_PositionLabel;
+          PushLabelWidth(s_PositionLabelWidth);
+        }
+        else
+        {
+          field.xMin -= s_VectorLabelWidth + STD_PAD;
+
+          var ellipsis = new Rect(field.x - total.height - 2f,
+                                  field.y,
+                                  total.height - 6f,
+                                  total.height);
+          label.text = "◄◄";
+          label.tooltip = "Make this Inspector window wider—some info may currently be squeezed off screen.";
+          GUI.Label(ellipsis, label, Styles.TitleText);
+
+          label.text = label.tooltip = string.Empty;
+        }
+
         field.height = STD_LINE_HEIGHT;
-
-        PushLabelWidth(Styles.Label.CalcWidth("(Position)"));
-
-        label.text = "(Position)";
 
         EditorGUI.BeginChangeCheck();
         current.position = EditorGUI.Vector3Field(field, label, current.position);
@@ -78,17 +106,18 @@ namespace PyroDK.Editor
 
         field.y += STD_LINE_ADVANCE;
 
-        label.text = "(Rotation)";
+        if (do_labels)
+        {
+          label.text = s_RotationLabel;
 
-        if (GUI.enabled)
-          return RotationField(in field, label, ref current.rotation);
-        else
-          return RawQuaternionField(in field, label, ref current.rotation);
-      }
-      finally
-      {
-        EditorGUI.EndDisabledGroup();
-        promise.Dispose();
+          bool changed = RotationField(in field, label, ref current.rotation);
+
+          PopLabelWidth();
+          return changed;
+        }
+
+        label.text = string.Empty;
+        return RotationField(in field, label, ref current.rotation);
       }
     }
 
@@ -96,11 +125,12 @@ namespace PyroDK.Editor
     {
       EditorGUI.BeginChangeCheck();
 
-      Vector3 eulers = EditorGUI.Vector3Field(rect, label, rotation.ToEuler180().Squeezed());
+      var eulers = rotation.ToEuler180().Squeezed();
+      var edits = EditorGUI.Vector3Field(rect, label, eulers);
 
-      if (EditorGUI.EndChangeCheck())
+      if (EditorGUI.EndChangeCheck() && !edits.Approximately(eulers))
       {
-        rotation.SmoothSetEulers(eulers);
+        rotation.SmoothSetEulers(edits);
         return true;
       }
 
@@ -151,15 +181,10 @@ namespace PyroDK.Editor
 
       public override float GetPropertyHeight(SerializedProperty prop, GUIContent label)
       {
-        if (m_Toggleable = fieldInfo.IsDefined<ToggleableAttribute>())
-        {
-          if (!prop.isExpanded && !Event.current.alt)
-          {
-            return Styles.TextInfo.CalcFieldHeight(s_DisabledPoseString);
-          }
-        }
+        if ((m_Toggleable = fieldInfo.IsDefined<ToggleableAttribute>()) && !prop.isExpanded)
+          return Styles.TextInfoSmall.CalcFieldHeight(s_DisabledPoseMessage).AtLeast(STD_LINE_HEIGHT);
 
-        return STD_LINE_ADVANCE + STD_LINE_HEIGHT;
+        return STD_LINE_HEIGHT + STD_LINE_ADVANCE;
       }
 
     }

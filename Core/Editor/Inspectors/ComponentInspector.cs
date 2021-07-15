@@ -27,18 +27,21 @@ namespace PyroDK.Editor
       [System.NonSerialized]
       private Spawnable m_Spawnable = null;
 
+
+      public override bool RequiresConstantRepaint()
+      {
+        // TODO determine if this is OK to use en masse
+        return true;
+      }
+
       public override void OnInspectorGUI()
       {
         m_Spawnable = target as Spawnable;
 
         if (m_Spawnable == null)
-        {
           DrawPyroInspector(serializedObject);
-        }
         else
-        {
           DrawPyroInspector(serializedObject, InjectSpawnableButtons);
-        }
       }
 
 

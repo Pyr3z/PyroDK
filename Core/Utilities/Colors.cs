@@ -173,7 +173,7 @@ namespace PyroDK
 
     public static Color32 Alpha(this Color32 c, float a)
     {
-      c.a = (byte)(a * byte.MaxValue);
+      c.a = (byte)(a * 0xFF);
       return c;
     }
     public static Color32 Alpha(this Color32 c, byte a)
@@ -184,32 +184,58 @@ namespace PyroDK
 
     public static Color32 ToGrayscale(this Color32 c)
     {
-      c.r = c.g = c.b = (byte)((c.r + c.g + c.b) / 3).ClampIndex(byte.MaxValue + 1);
+      c.r = c.g = c.b = (byte)(((float)c.r + c.g + c.b) / 3f);
       return c;
+    }
+
+    public static Color32 LerpToGrayscale(this Color32 c, float t)
+    {
+      float gray = ((float)c.r + c.g + c.b) / 3f;
+
+      c.r = (byte)(c.r + (gray - c.r) * t);
+      c.g = (byte)(c.g + (gray - c.g) * t);
+      c.b = (byte)(c.b + (gray - c.b) * t);
+
+      return c;
+    }
+
+    public static Color32 SmoothToGrayscale(this Color32 c, float t)
+    {
+      return LerpToGrayscale(c, Floats.SmoothStepParameter(t));
     }
 
     public static Color32 Inverted(this Color32 c)
     {
-      float r = 1f - ((float)c.r / byte.MaxValue);
-      float g = 1f - ((float)c.g / byte.MaxValue);
-      float b = 1f - ((float)c.b / byte.MaxValue);
+      float r = 1f - ((float)c.r / 0xFF);
+      float g = 1f - ((float)c.g / 0xFF);
+      float b = 1f - ((float)c.b / 0xFF);
 
-      return new Color32( r: (byte)(r * byte.MaxValue),
-                          g: (byte)(g * byte.MaxValue),
-                          b: (byte)(b * byte.MaxValue),
-                          a: c.a);
+      return new Color32( (byte)(r * 0xFF),
+                          (byte)(g * 0xFF),
+                          (byte)(b * 0xFF),
+                                 c.a );
     }
 
-
-    public const byte HEX_BUMP = 0x27;
-    public const byte HEX_CEIL = 0xD8;
+    public const byte HEX_BUMP = 0x28;
+    public const byte HEX_CEIL = 0xFF - HEX_BUMP;
 
     public static Color32 AlphaBump(this Color32 c)
     {
-      if (c.a > HEX_CEIL)
-        c.a = byte.MaxValue;
+      if (c.a >= HEX_CEIL)
+        c.a = 0xFF;
       else
         c.a += HEX_BUMP;
+      return c;
+    }
+    
+    public static Color32 AlphaBump(this Color32 c, int i)
+    {
+      int alpha = c.a + HEX_BUMP * i;
+
+      if (alpha >= 0xFF)
+        c.a = 0xFF;
+      else
+        c.a = (byte)alpha;
       return c;
     }
 
@@ -219,6 +245,24 @@ namespace PyroDK
         c.a = 0x00;
       else
         c.a -= HEX_BUMP;
+      return c;
+    }
+
+    public static Color32 AlphaWash(this Color32 c, int i)
+    {
+      int alpha = c.a - HEX_BUMP * i;
+
+      if (alpha <= 0x00)
+        c.a = 0x00;
+      else
+        c.a = (byte)alpha;
+      return c;
+    }
+
+
+    public static Color32 AlphaInvert(this Color32 c)
+    {
+      c.a = (byte)(0xFF - c.a);
       return c;
     }
 
@@ -263,12 +307,12 @@ namespace PyroDK
 
     public static Color32 Black = FromHex("#000000FF");
     public static Color32 White = FromHex("#FFFFFFFF");
-    public static Color32 Grey  = FromHex("#888888FF");
+    public static Color32 Gray  = FromHex("#888888FF");
 
     public static Color32 Red   = FromHex("#FF0000FF");
     public static Color32 Green = FromHex("#00FF00FF");
     public static Color32 Blue  = FromHex("#0000FFFF");
-    public static Color32 None  = FromHex("#FFFFFF00");
+    public static Color32 Clear = FromHex("#FFFFFF00");
 
     public static Color32 Yellow = FromHex("#FFFF00FF");
 
@@ -399,7 +443,7 @@ namespace PyroDK
 
       for (int i = 0; i < len; ++i)
       {
-        pixels[i] = Colors.None;
+        pixels[i] = Colors.Clear;
       }
 
       Clear.SetPixels32(pixels);

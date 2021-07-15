@@ -32,12 +32,12 @@ namespace PyroDK
 
   public enum SceneType : int
   {
-    None,         // Very greedy. Unloads everything and takes up ALL the space.
-    Root,         // Only 1 Root may be, and is typically required to be, active at a time.
-    PlaySpace,    // Only 1 PlaySpace may be active at a time.
-    LayerSpace,   // Any number of LayerSpaces may be active at a time.
+    None,      // Very greedy. Unloads everything and takes up ALL the space.
+    Root,      // Only 1 Root may be, and is typically required to be, active at a time.
+    PlaySpace, // Only 1 PlaySpace may be active at a time.
+    SubSpace,  // Any number of SubSpaces may be active at a time.
 
-    TestSpace,    // Only 1 TestSpace may be active at a time.
+    TestSpace, // Only 1 TestSpace may be active at a time.
 
     [System.Obsolete(null, false)]
     COUNT
@@ -415,8 +415,8 @@ namespace PyroDK
     [SerializeField] [SignBitBool]
     private float m_FadeOutTime = -1f;
 
-    [SerializeField] [RequireFieldValue("m_SceneType", SceneType.LayerSpace)]
-    private SceneRef[] m_LayerScenes = new SceneRef[0]; // TODO implement with RootScene loading
+    [SerializeField] [RequireFieldValue("m_SceneType", SceneType.SubSpace)]
+    private SceneRef[] m_SubSpaces = new SceneRef[0]; // TODO implement with RootScene loading
 
 
   [Header("Event Callback Hooks")] [Space(22f)]
@@ -479,10 +479,11 @@ namespace PyroDK
       }
       else if (RootScene.IsActive)
       {
-        _ = RootScene.LoadSpace(this);
+        if (RootScene.LoadSpace(this))
+          LoadSubSpaces();
       }
       #if UNITY_EDITOR // fallback in Editor
-      else if (!UnityEditor.EditorApplication.isPlaying)
+      else if (!EditorApplication.isPlaying)
       {
         if (m_SceneType == SceneType.None)
           m_Instance = EditorSceneManager.OpenScene(m_ScenePath, OpenSceneMode.Single);
@@ -491,13 +492,20 @@ namespace PyroDK
 
         if (m_SceneType == SceneType.PlaySpace)
         {
-          int sanity = 120;
+          var prev = GetActive();
+          if (prev && prev.Type != SceneType.Root)
+            prev.Unload();
 
+          int sanity = 120;
           while (!SceneManager.SetActiveScene(m_Instance) && sanity --> 0)
+          {
             System.Threading.Thread.Sleep(500);
+          }
 
           if (sanity == 0)
             Logging.ShouldNotReach();
+          else
+            LoadSubSpaces();
         }
       }
       #endif
@@ -510,22 +518,48 @@ namespace PyroDK
 
     public void Unload() // likewise as Load();
     {
-      if (IsLoaded)
+      if (!IsLoaded)
+        return;
+
+      if (RootScene.IsActive)
       {
-        if (RootScene.IsActive)
-        {
-          RootScene.UnloadSpace(this);
-        }
-        #if UNITY_EDITOR
-        else if (!UnityEditor.EditorApplication.isPlaying)
-        {
-          EditorSceneManager.CloseScene(m_Instance, removeScene: false);
-        }
-        #endif
-        else
-        {
-          _ = UnloadRoutine();
-        }
+        _ = RootScene.UnloadSpace(this);
+      }
+      #if UNITY_EDITOR
+      else if (!EditorApplication.isPlaying)
+      {
+        EditorSceneManager.CloseScene(m_Instance, removeScene: true);
+      }
+      #endif
+      else
+      {
+        _ = UnloadRoutine();
+      }
+
+      UnloadSubSpaces();
+    }
+
+    public void LoadSubSpaces()
+    {
+      if (m_SceneType == SceneType.SubSpace)
+        return;
+
+      foreach (var subspace in m_SubSpaces)
+      {
+        if (subspace && subspace != this) // no infinite recursion today =3
+          subspace.Load();
+      }
+    }
+
+    public void UnloadSubSpaces()
+    {
+      if (m_SceneType == SceneType.SubSpace)
+        return;
+
+      foreach (var subspace in m_SubSpaces)
+      {
+        if (subspace && subspace != this)
+          subspace.Unload();
       }
     }
 

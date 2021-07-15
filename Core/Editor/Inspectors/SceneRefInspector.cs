@@ -118,8 +118,8 @@ namespace PyroDK.Editor
                 goto default;
               break;
 
-            case "m_LayerScenes":
-              if (scenetype == SceneType.PlaySpace || scenetype == SceneType.None)
+            case "m_SubScenes":
+              if (scenetype != SceneType.SubSpace)
                 goto default;
               break;
 

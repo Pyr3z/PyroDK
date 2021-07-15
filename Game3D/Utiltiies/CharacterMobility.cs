@@ -252,18 +252,32 @@ namespace PyroDK.Game3D
     }
 
     // TODO move to Game2D
-    public static (Vector3 c1, Vector3 c2) CapsuleCentersLocal(CapsuleCollider2D caps)
+    public static int CapsuleCentersLocal(CapsuleCollider2D caps, out Vector3 c1, out Vector3 c2)
     {
-      (Vector3 c1, Vector3 c2) result = (caps.offset, caps.offset);
+      c1 = c2 = caps.offset;
 
-      int dir = (int)caps.direction;
+      int dir = -1;
+      if (caps.direction == CapsuleDirection2D.Vertical &&
+          caps.size.x < caps.size.y)
+      {
+        dir = 1;
+      }
+      else if (caps.direction == CapsuleDirection2D.Horizontal &&
+               caps.size.y < caps.size.x)
+      {
+        dir = 0;
+      }
 
-      float offset = caps.size[dir] / 2f - caps.size[dir.NOT()];
+      if (dir != -1)
+      {
+        float offset = ( caps.size[dir]       / 2f ) -
+                       ( caps.size[dir.NOT()] / 2f );
 
-      result.c1[dir] += offset;
-      result.c2[dir] -= offset;
+        c1[dir] += offset;
+        c2[dir] -= offset;
+      }
 
-      return result;
+      return dir;
     }
 
   }

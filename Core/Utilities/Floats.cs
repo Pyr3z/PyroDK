@@ -252,12 +252,13 @@ namespace PyroDK
 
     public static float SmoothSteppedTo(this float from, float to, float t)
     {
-      return Mathf.LerpUnclamped(from, to, SmoothStepParameter(t));
+      t = SmoothStepParameter(t);
+      return from + (to - from) * t;
     }
 
     public static float LerpedTo(this float from, float to, float t)
     {
-      return Mathf.LerpUnclamped(from, to, t);
+      return from + (to - from) * t;
     }
 
   }

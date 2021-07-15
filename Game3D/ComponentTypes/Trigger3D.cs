@@ -127,6 +127,7 @@ namespace PyroDK.Game3D
           Gizmos.matrix = trig.transform.localToWorldMatrix;
           Gizmos.DrawWireSphere(sphere.center, sphere.radius);
         }
+#if false // disabled for lookin clunky
         else if (trig is CapsuleCollider cap)
         {
           var (c1, c2) = CharacterMobility.CapsuleCentersLocal(cap);
@@ -136,6 +137,7 @@ namespace PyroDK.Game3D
           Gizmos.DrawWireSphere(c1, radius);
           Gizmos.DrawWireSphere(c2, radius);
         }
+#endif
         else
         {
           var bounds = trig.bounds;

@@ -104,12 +104,12 @@ namespace PyroDK
         }
         else
         {
-          m_Name = RichText.Color($"\"{m_Action.name}\" on {(InputActionPhase)m_TriggerPhase}", Colors.Grey);
+          m_Name = RichText.Color($"\"{m_Action.name}\" on {(InputActionPhase)m_TriggerPhase}", Colors.Gray);
         }
       }
       else
       {
-        m_Name = RichText.Color("(no action)", Colors.Grey);
+        m_Name = RichText.Color("(no action)", Colors.Gray);
       }
 
       return m_Name;

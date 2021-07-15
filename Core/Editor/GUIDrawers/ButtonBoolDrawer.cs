@@ -29,7 +29,6 @@ namespace PyroDK.Editor
           return;
         }
 
-
         var attr = (ButtonBoolAttribute)attribute;
 
         if (!attr.CustomText.IsEmpty())
@@ -37,11 +36,9 @@ namespace PyroDK.Editor
           label.text = attr.CustomText;
         }
 
-        float width = STD_PAD_RIGHT + Styles.Button.CalcWidth(label) + STD_PAD_RIGHT;
-        width = pos.width - width;
-
-        pos.xMax -= width;
-        pos.y += 1f;
+        pos.xMin += LabelWidth;
+        pos.x += 1f;
+        pos.y += 2f;
         pos.height -= 2f;
 
         prop.boolValue ^= GUI.Button(pos, label, Styles.Button);

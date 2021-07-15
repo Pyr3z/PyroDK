@@ -45,14 +45,11 @@ namespace PyroDK.Editor
 
       protected override void OnHeaderGUI() // only shows for Assets
       {
-        GUILayout.BeginHorizontal(Styles.TitleBox);
-        GUILayout.BeginVertical(Styles.Section);
+        EditorGUILayout.BeginHorizontal(Styles.TitleBox);
+        EditorGUILayout.BeginVertical(Styles.Section);
 
         string prepath = PATH_UNAVAILABLE;
         string type    = $"<{target.GetType().GetRichLogName()}>";
-
-        float name_w = Styles.TitleText.CalcWidth(s_CurrentObjectName) + 4f;
-        float type_w = Styles.TitleText.CalcWidth(type);
 
         if (!s_CurrentObjectPath.IsEmpty())
         {
@@ -64,72 +61,75 @@ namespace PyroDK.Editor
             prepath = s_CurrentObjectPath;
         }
 
-        float line = Styles.TitleTextSmall.lineHeight;
+        float type_w = Styles.TitleTextSmall.CalcWidth(type);
+        float line   = Styles.TitleTextSmall.lineHeight;
 
         var total = GUILayoutUtility.GetRect(width: line,
-                                            height: line + 2f * GUIDrawers.STD_LINE_ADVANCE + 6f,
+                                            height: line + Styles.TitleText.lineHeight + GUIDrawers.STD_LINE_HEIGHT + 6f,
                                                     GUILayout.ExpandWidth(true));
 
+        // Upper-left: Parent directory path
         var rect = new Rect(total.x, total.y, total.width, line);
         GUI.Label(rect, prepath, Styles.TitleTextSmall);
 
+        // Middle-center: Asset's identifier
+        rect.y += rect.height + 2f;
+        rect.height = Styles.TitleText.lineHeight;
+        //rect.width = name_w;
+        //rect.x = total.x + (total.width - name_w) / 2f;
+        GUI.Label(rect, s_CurrentObjectName, Styles.TitleText);
+
+        // Bottom-right: Asset's type
         rect.y += rect.height + 2f;
         rect.height = GUIDrawers.STD_LINE_HEIGHT;
-
-        float width = rect.width;
-
-        if (name_w + type_w < width)
-        {
-          rect.width = name_w;
-          //rect.x += 2f + (total.width - name_w) / 2f;
-          rect.x = GUIDrawers.FieldStartX;
-          GUI.Label(rect, s_CurrentObjectName, Styles.TitleText);
-
-          // we can fit the type too:
-          rect.xMin = total.xMax - type_w;
-          rect.xMax = total.xMax;
-          rect.yMax = total.yMax;
-          rect.yMin = total.yMax - GUIDrawers.STD_LINE_ADVANCE;
-          GUI.Label(rect, type, Styles.TitleText);
-        }
-        else
-        {
-          GUI.Label(rect, s_CurrentObjectName, Styles.TitleText);
-          rect.yMax = total.yMax;
-          rect.yMin = total.yMax - GUIDrawers.STD_LINE_ADVANCE;
-        }
-
-        rect.xMin = total.xMin;
+        rect.xMin = total.xMax - type_w;
         rect.xMax = total.xMax;
+        GUI.Label(rect, type, Styles.TitleTextSmall);
 
+        // Bottom-left: Preloaded asset toggle
+        rect.x = total.xMin;
+        rect.xMax = total.xMax - type_w;
         PreloadedAssetToggle(rect);
 
-        GUILayout.EndVertical();
-        GUILayout.EndHorizontal();
-
-        if (GUIDrawers.IsAnyClick(total, Colors.None, Colors.GUI.Comment))
+        // Any click opens the context menu:
+        if (GUIDrawers.IsAnyClick(total.Expanded(3f), Colors.Clear, Colors.GUI.Comment))
         {
           HeaderContextMenu()
             .ShowAsContext();
         }
+
+        EditorGUILayout.EndVertical();
+        EditorGUILayout.EndHorizontal();
       }
 
       private GenericMenu HeaderContextMenu()
       {
-        var menu = new GenericMenu();
-
-        menu.AddItem(new GUIContent("Copy Object Path"), on: false, () =>
+        using (var labels = Labels.Borrow("Copy Identifier",
+                                          "Show Asset in Project Window",
+                                          "Goto Script Asset"))
         {
-          GUIUtility.systemCopyBuffer = s_CurrentObjectPath;
-        });
+          var menu = new GenericMenu();
 
-        menu.AddItem(new GUIContent("Show in Project Window"), on: false, () =>
-        {
-          ProjectWindowUtil.ShowCreatedAsset(target);
-          EditorGUIUtility.PingObject(target);
-        });
+          menu.AddItem(labels[0], on: false, () =>
+          {
+            GUIUtility.systemCopyBuffer = s_CurrentObjectPath;
+          });
 
-        return menu;
+          menu.AddItem(labels[1], on: false, () =>
+          {
+            //ProjectWindowUtil.ShowCreatedAsset(target);
+            EditorGUIUtility.PingObject(target);
+          });
+
+          menu.AddItem(labels[2], on: false, () =>
+          {
+            var script = serializedObject.FindProperty("m_Script").objectReferenceValue;
+            //ProjectWindowUtil.ShowCreatedAsset(script);
+            EditorGUIUtility.PingObject(script);
+          });
+
+          return menu;
+        }
       }
 
       private void PreloadedAssetToggle(Rect rect)
@@ -139,10 +139,9 @@ namespace PyroDK.Editor
         if (!AssetObjects.IsMainAsset(target))
           return;
 
+        rect.width = Styles.Label.CalcWidth(LABEL) + 2f + GUIDrawers.STD_TOGGLE_W;
+
         bool is_preloaded = AssetObjects.IsPreloadedAsset(target);
-
-        //rect.xMin += rect.width - Styles.Label.CalcWidth(LABEL) - GUIDrawers.STD_PAD - GUIDrawers.STD_TOGGLE_W;
-
         bool edit = EditorGUI.ToggleLeft(rect, LABEL, is_preloaded, Styles.Label);
 
         if (is_preloaded != edit)
@@ -151,7 +150,7 @@ namespace PyroDK.Editor
         }
       }
 
-    }
+    } // end class BaseInspector
 
 
     public static void DrawPyroInspector(SerializedObject sobj, InjectedDrawer inj = null)
@@ -179,56 +178,93 @@ namespace PyroDK.Editor
       // For Components, display the path as a sub-header
       if (sobj.targetObject is BaseComponent)
       {
-        EditorGUILayout.BeginVertical(Styles.Section);
+        var style_path = Styles.TextInfoSmall;
+        var style_namespace = Styles.TextDetail;
 
-        float total_width = GUIDrawers.ContentWidth + GUIDrawers.STD_INDENT - 1f;
-        float path_height = Styles.TextInfoSmall.CalcHeight(s_CurrentObjectPath, total_width);
-        float total_height = path_height;
-
-        bool do_namespace_line = !type.Namespace.IsEmpty();
-        if (do_namespace_line)
+        using (var labels = Labels.Borrow(s_CurrentObjectPath, type.Namespace))
+        using (new EditorGUILayout.VerticalScope(Styles.Section))
         {
-          total_height += GUIDrawers.STD_PAD + Styles.TextDetail.lineHeight;
-        }
-        
-        var total = GUILayoutUtility.GetRect(total_width, total_height);
-        total.xMin -= GUIDrawers.STD_INDENT;
+          var path_size = new Vector2(GUIDrawers.FieldEndX - 4f, 0f);
+          path_size.y = style_path.CalcHeight(labels[0], path_size.x);
 
-        var rect = new Rect(total.x,
-                            total.y,
-                            total.width,
-                            path_height);
-
-        GUI.Label(rect, s_CurrentObjectPath, Styles.TextInfoSmall);
-
-        if (do_namespace_line)
-        {
-          rect.yMax = total.yMax;
-          rect.yMin = total.yMax - Styles.TextDetail.lineHeight - 2f;
-          GUI.Label(rect, RichText.Color(type.Namespace, Colors.Debug.Log), Styles.TextDetail);
-        }
-
-        GUILayout.EndVertical();
-
-        if (GUIDrawers.IsAnyClick(total, Colors.None, Colors.GUI.Comment))
-        {
-          using (var keeper = Labels.Borrow("Select Script", "Copy Identifier"))
+          if (path_size.y > style_path.lineHeight)
           {
+            // handle tiny tiny inspectors
+            string short_path = labels[0].text;
+
+            int bar = 1 + short_path.IndexOf('|');
+            if (bar > 0 && bar < short_path.Length - 1)
+              short_path = short_path.Substring(bar);
+
+            if (short_path.StartsWith("</"))
+            {
+              bar = 1 + short_path.IndexOf('>');
+              if (bar > 0 && bar < short_path.Length - 1)
+                short_path = short_path.Substring(bar);
+            }
+
+            labels[0].text = short_path;
+            path_size.y = style_path.CalcHeight(labels[0], path_size.x);
+          }
+
+          path_size.x = style_path.CalcWidth(labels[0]);
+
+          float total_height = 4f + path_size.y;
+
+          // adjust the height we ask for, to account for the namespace label
+          bool draw_namespace = !labels[1].text.IsEmpty();
+          if (draw_namespace && path_size.x + style_namespace.CalcWidth(type.Namespace) > GUIDrawers.ContentWidth)
+            total_height += style_namespace.lineHeight;
+          else
+            total_height += 5f; // kinda magic
+
+          var total = GUILayoutUtility.GetRect(total_height, total_height, GUILayout.ExpandWidth(true));
+          total.xMin = 3f;
+
+          var rect = new Rect(total.x,
+                              total.y,
+                              total.width,
+                              path_size.y);
+          GUI.Label(rect, labels[0], style_path);
+
+          if (draw_namespace)
+          {
+            if (total_height > 4f + path_size.y)
+            {
+              // two lines
+              rect.yMax = total.yMax;
+              rect.yMin = total.yMax - style_namespace.lineHeight - 4f;
+              GUI.Label(rect, labels[1], style_namespace);
+            }
+            else
+            {
+              // one line
+              rect.xMin += path_size.x + 2f;
+              GUI.Label(rect, labels[1], style_namespace);
+            }
+          }
+
+          if (GUIDrawers.IsAnyClick(total.Expanded(2.5f), Colors.Clear, Colors.GUI.Comment))
+          {
+            labels[0].text = "Copy Identifier";
+            labels[1].text = "Goto Script Asset";
+
             var menu = new GenericMenu();
 
-            menu.AddItem(keeper[0], on: false, () =>
-            {
-              Selection.activeObject = script;
-            });
-
-            menu.AddItem(keeper[1], on: false, () =>
+            menu.AddItem(labels[0], on: false, () =>
             {
               GUIUtility.systemCopyBuffer = RichText.RemoveSoberly(s_CurrentObjectPath);
             });
 
+            menu.AddItem(labels[1], on: false, () =>
+            {
+              //ProjectWindowUtil.ShowCreatedAsset(script);
+              EditorGUIUtility.PingObject(script);
+            });
+
             menu.ShowAsContext();
           }
-        }
+        } // end using scope
       }
 
       // move on to the rest of the properties:
@@ -465,7 +501,7 @@ namespace PyroDK.Editor
         pos.x += GUIDrawers.LabelWidthHalf;
         pos.xMax = GUIDrawers.LabelEndX;
         GUIDrawers.InfoField(pos:   pos,
-                                     text:  RichText.Color("[ReadOnly]", Colors.Grey),
+                                     text:  RichText.Color("[ReadOnly]", Colors.Gray),
                                      style: Styles.TextDetail);
 
         pos.x    = GUIDrawers.FieldStartX;

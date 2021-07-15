@@ -46,7 +46,7 @@ namespace PyroDK
     #endif
 
 
-    [SerializeField] [RequiredReference(color_hex: "#EEA02011")]
+    [SerializeField] [RequiredReference]
     private Transform   m_Target;
     [SerializeField] [Toggleable]
     private Pose        m_OffsetPose = Poses.Disabled;
