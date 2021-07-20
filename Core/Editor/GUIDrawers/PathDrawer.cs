@@ -87,7 +87,7 @@ namespace PyroDK.Editor
       bool edited = !read_only && EditorGUI.EndChangeCheck();
 
       if (btn_width < 1f)
-        return edited && path.Set(edit);
+        return edited && path.SetLax(edit);
 
       pos.x     = pos.xMax + STD_PAD;
       pos.width = btn_width;
@@ -105,31 +105,31 @@ namespace PyroDK.Editor
         {
           if (path.EditorFlags.HasFlag(FilePathFlags.DirsOnly))
           {
-            edit = EditorUtility.SaveFolderPanel( title:        label.text,
-                                                  folder:       path.GetParentPath(),
-                                                  defaultName:  path.GetFilename());
+            edit = EditorUtility.SaveFolderPanel(title:       label.text,
+                                                 folder:      path.GetParentPath(),
+                                                 defaultName: path.GetFilename());
           }
           else if (path.IsAsset)
           {
-            edit = EditorUtility.SaveFilePanelInProject(title:        label.text,
-                                                        defaultName:  path.GetFilename(),
-                                                        extension:    path.GetExtension(),
-                                                        message:      "Select Asset Path",
-                                                        path:         path);
+            edit = EditorUtility.SaveFilePanelInProject(title:       label.text,
+                                                        defaultName: path.GetFilename(),
+                                                        extension:   path.GetExtension(),
+                                                        message:     "Select Asset Path",
+                                                        path:        path);
           }
           else
           {
-            edit = EditorUtility.SaveFilePanel( title:        label.text,
-                                                directory:    path.GetParentPath(),
-                                                defaultName:  path.GetFilename(),
-                                                extension:    path.GetExtension());
+            edit = EditorUtility.SaveFilePanel(title:       label.text,
+                                               directory:   path.GetParentPath(),
+                                               defaultName: path.GetFilename(),
+                                               extension:   path.GetExtension());
           }
 
-          return path.Set(edit);
+          return path.SetLax(edit);
         }
       }
 
-      return edited && path.Set(edit);
+      return edited && path.SetLax(edit);
     }
 
 
@@ -137,42 +137,37 @@ namespace PyroDK.Editor
     [CustomPropertyDrawer(typeof(FilePath), true)]
     private sealed class PathDrawer : PropertyDrawer
     {
+      private FilePath m_PathClone = new FilePath();
 
-      private FilePath m_PathClone = null;
 
-
-      public override void OnGUI(Rect pos, SerializedProperty sprop, GUIContent label)
+      public override void OnGUI(Rect total, SerializedProperty prop, GUIContent label)
       {
-        if (m_PathClone == null)
-        {
-          InvalidField(pos, "Failed to get underlying Path field!", label);
-          return;
-        }
-        
-        label.tooltip = m_PathClone.RuntimeFlags.ToString();
+        var prop_flags = prop.Copy();
+        prop_flags.NextVisible(true);
 
-        if (PathField(pos, label, m_PathClone))
+        var prop_path = prop_flags.Copy();
+        prop_path.NextVisible(false);
+
+        bool was_enabled = GUI.enabled;
+        if (was_enabled)
+          m_PathClone.SetRaw((FilePathFlags)prop_flags.intValue, prop_path.stringValue);
+        else
+          m_PathClone.SetRaw((FilePathFlags)prop_flags.intValue | FilePathFlags.ReadOnly, prop_path.stringValue);
+
+        label.tooltip = $"{m_PathClone.RuntimeFlags}\n[{m_PathClone.EditorFlags}]";
+
+        GUI.enabled = true;
+        if (PathField(total, label, m_PathClone))
         {
-          sprop.FindPropertyRelative("m_Flags").intValue    = m_PathClone.RawFlags;
-          sprop.FindPropertyRelative("m_Path").stringValue  = m_PathClone.RawString;
-          sprop.serializedObject.ApplyModifiedProperties();
+          prop_flags.intValue   = m_PathClone.RawFlags;
+          prop_path.stringValue = m_PathClone.RawString;
+          prop.serializedObject.ApplyModifiedProperties();
         }
+        GUI.enabled = was_enabled;
       }
 
-      public override float GetPropertyHeight(SerializedProperty sprop, GUIContent label)
+      public override float GetPropertyHeight(SerializedProperty prop, GUIContent label)
       {
-        if (this.TryGetUnderlyingValue(sprop, out FilePath path))
-        {
-          if (path.EditorFlags.HasFlag(FilePathFlags.ReadOnly))
-          {
-            m_PathClone = path;
-          }
-          else
-          {
-            path.CloneTo(ref m_PathClone);
-          }
-        }
-
         return STD_LINE_HEIGHT;
       }
 

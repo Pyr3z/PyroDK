@@ -267,15 +267,17 @@ namespace PyroDK.Game3D
       {
         dir = 0;
       }
-
-      if (dir != -1)
+      else
       {
-        float offset = ( caps.size[dir]       / 2f ) -
-                       ( caps.size[dir.NOT()] / 2f );
-
-        c1[dir] += offset;
-        c2[dir] -= offset;
+        // forms a circle.
+        return -1;
       }
+
+      float offset = ( caps.size[dir]       / 2f ) -
+                     ( caps.size[dir.NOT()] / 2f );
+
+      c1[dir] += offset;
+      c2[dir] -= offset;
 
       return dir;
     }

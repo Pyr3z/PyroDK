@@ -8,7 +8,6 @@
   PropertyDrawer for fields having the [ReadOnly] attribute.
 **/
 
-using System.Collections.Generic;
 using System.Reflection;
 
 using UnityEngine;
@@ -18,6 +17,8 @@ using UnityEditor;
 
 namespace PyroDK.Editor
 {
+  using Type = System.Type;
+
 
   public static partial class GUIDrawers
   {
@@ -26,11 +27,12 @@ namespace PyroDK.Editor
     {
       private const string TOOLTIP_DEFAULT = "[ReadOnly]";
 
+
       private GUIStyle        m_StringStyle   = null;
       private PropertyDrawer  m_CustomDrawer  = null;
 
 
-      public override void OnGUI(Rect pos, SerializedProperty prop, GUIContent label)
+      public override void OnGUI(Rect total, SerializedProperty prop, GUIContent label)
       {
         var attr = (ReadOnlyAttribute)attribute;
         
@@ -45,19 +47,19 @@ namespace PyroDK.Editor
         if (HasCustomDrawer())
         {
           EditorGUI.BeginDisabledGroup(true);
-          m_CustomDrawer.OnGUI(pos, prop, label);
+          m_CustomDrawer.OnGUI(total, prop, label);
           EditorGUI.EndDisabledGroup();
         }
         else if (m_StringStyle != null)
         {
-          InfoField(pos,  text:   Labels.Scratch.text,
-                                  style:  m_StringStyle,
-                                  label:  label);
+          InfoField(total, text:  Labels.Scratch.text,
+                           style: m_StringStyle,
+                           label: label);
         }
         else // default
         {
           EditorGUI.BeginDisabledGroup(true);
-          _ = EditorGUI.PropertyField(pos, prop, label, includeChildren: true);
+          _ = EditorGUI.PropertyField(total, prop, label, includeChildren: true);
           EditorGUI.EndDisabledGroup();
         }
       }
@@ -109,7 +111,7 @@ namespace PyroDK.Editor
       private bool HasCustomDrawer()
       {
         if (m_CustomDrawer != null)
-          return true;
+          return m_CustomDrawer != this;
 
         var attr = (ReadOnlyAttribute)attribute;
 
@@ -123,34 +125,36 @@ namespace PyroDK.Editor
           {
             $"Could not find type from string \"{attr.CustomDrawerString}\"."
               .LogWarning();
-            attr.CustomDrawerString = null;
+            m_CustomDrawer = this;
             return false;
           }
 
-          if (!type.TryGetInternalField("m_FieldInfo", out FieldInfo fi_FieldInfo))
+          if (!type.TryGetInternalField("m_FieldInfo", out FieldInfo finfo))
           {
             $"Could not get FieldInfo for \"{type.Name}.m_FieldInfo\"."
               .LogError();
-
-            attr.CustomDrawerType   = null;
-            attr.CustomDrawerString = null;
+            m_CustomDrawer = this;
             return false;
           }
 
           m_CustomDrawer = System.Activator.CreateInstance(type) as PropertyDrawer;
 
-          if (!fi_FieldInfo.TrySetValue(m_CustomDrawer, fieldInfo))
+          if (!finfo.TrySetValue(m_CustomDrawer, fieldInfo))
           {
             $"Could not set the fieldInfo property on \"{type.Name}\"."
               .LogError();
-
-            attr.CustomDrawerType   = null;
-            attr.CustomDrawerString = null;
-            m_CustomDrawer = null;
+            m_CustomDrawer = this;
           }
         }
+        else if (fieldInfo.FieldType == TSpy<FilePath>.Type)
+        {
+          m_CustomDrawer = new PathDrawer();
+          
+          Debug.Assert(TSpy<PathDrawer>.Type.TryGetInternalField("m_FieldInfo", out FieldInfo finfo));
+          finfo.SetValue(m_CustomDrawer, fieldInfo);
+        }
 
-        return m_CustomDrawer != null;
+        return m_CustomDrawer != null && m_CustomDrawer != this;
       }
 
     }

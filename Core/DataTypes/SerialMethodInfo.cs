@@ -24,6 +24,7 @@ namespace PyroDK
     ISerializationCallbackReceiver
   {
     public MethodInfo Info => m_RtMethodInfo ?? DeferredDeserialize();
+
     public Type[] ParameterTypes
     {
       get
@@ -34,6 +35,8 @@ namespace PyroDK
         return m_RtParamTypes;
       }
     }
+
+    public int ParameterCount => m_ParamTypes?.Length ?? 0;
 
     public bool IsMissing => m_Declarer.IsEmpty() || Info == TypeMembers.MissingMethod;
 
@@ -193,7 +196,7 @@ namespace PyroDK
   [System.Serializable]
   public sealed class SerialDelegate
   {
-    internal const int MAX_PARAMETER_COUNT = 3;
+    internal const int MAX_PARAMETER_COUNT = 2;
     public static bool IsValidMethod(MethodInfo method)
     {
       if (method.IsSpecialName ||
@@ -205,12 +208,13 @@ namespace PyroDK
 
       var parameters = method.GetParameters();
 
-      if (parameters.Length > MAX_PARAMETER_COUNT)
-        return false;
-
+      int i = 0;
       foreach (var parameter in parameters)
       {
-        if (Serializer.RuntimeTypeToCode(parameter.ParameterType) <= SerialTypeCode.Unsupported)
+        if (parameter.HasDefaultValue)
+          break;
+
+        if (++i > MAX_PARAMETER_COUNT || Serializer.RuntimeTypeToCode(parameter.ParameterType) <= SerialTypeCode.Unsupported)
           return false;
       }
 
@@ -230,8 +234,6 @@ namespace PyroDK
     private SerialMethodInfo m_Method;
     [SerializeField]
     private Object m_Target;
-    [SerializeField]
-    private bool m_Static;
 
 
     private SerialDelegate()
@@ -239,16 +241,13 @@ namespace PyroDK
     }
 
 
-    public bool ValidateInvoke(object[] parameters)
+    public bool ValidateInvoke(object[] parameters) // TODO
     {
       if (!m_Method)
         return false;
 
       var pts  = m_Method.ParameterTypes;
       int plen = parameters?.Length ?? 0;
-
-      if (plen != pts.Length)
-        return false;
 
       for (int i = 0; i < plen; ++i)
       {
@@ -266,10 +265,18 @@ namespace PyroDK
       return true;
     }
 
+    public object InvokeUnchecked(object[] parameters)
+    {
+      // Should be pre-validated for bulk calls
+      return m_Method.Info.Invoke(m_Target, parameters);
+    }
+
     public object Invoke(object[] parameters)
     {
-      // Should be pre-validated in bulk
-      return m_Method.Info.Invoke(m_Target, parameters);
+      if (ValidateInvoke(parameters))
+        return m_Method.Info.Invoke(m_Target, parameters);
+      else
+        return null;
     }
 
   } // end class SerialDelegate

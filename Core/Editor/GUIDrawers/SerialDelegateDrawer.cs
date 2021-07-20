@@ -25,7 +25,43 @@ namespace PyroDK.Editor
     [CustomPropertyDrawer(typeof(SerialDelegate))]
     private sealed class SerialDelegateDrawer : PropertyDrawer
     {
-      private readonly struct DelegateChoice
+      private const float EXTRA_VERTICAL_SPACE = 6f;
+
+
+      private static string MakeSignature(MethodInfo method, bool rich)
+      {
+        // heavily stripped version of RichText.AppendSignature()
+
+        if (method == null)
+          return "<null>";
+
+        System.Func<Type, string> get_typename;
+        if (rich)
+          get_typename = Types.GetRichLogName;
+        else
+          get_typename = Types.GetLogName;
+
+        var bob = new System.Text.StringBuilder(method.Name).Append('(');
+
+        var parameters = method.GetParameters();
+        int i = 0, ilen = parameters.Length;
+        while (i < ilen && !parameters[i].HasDefaultValue)
+        {
+          if (i > 0)
+            bob.Append(", ");
+
+          bob.Append(get_typename(parameters[i].ParameterType));
+
+          ++i;
+        }
+
+        bob.Append(')');
+
+        return bob.ToString();
+      }
+
+
+      private readonly struct MethodChoice
       {
         public readonly SerializedProperty RootProp;
         public readonly MethodInfo Method;
@@ -34,12 +70,12 @@ namespace PyroDK.Editor
         public readonly bool IsCurrent;
 
 
-        public DelegateChoice(SerializedProperty root_prop, MethodInfo method, Object target, bool is_current)
+        public MethodChoice(SerializedProperty root_prop, MethodInfo method, Object target, bool is_current)
         {
           RootProp  = root_prop;
           Method    = method;
           Target    = target;
-          Signature = MakeSignature(method);
+          Signature = MakeSignature(method, rich: false);
           IsCurrent = is_current;
         }
 
@@ -66,45 +102,18 @@ namespace PyroDK.Editor
 
           RootProp.serializedObject.ApplyModifiedProperties();
         }
-      }
+      } // end struct MethodChoice
 
 
-      private const float EXTRA_VERTICAL_SPACE = 6f;
-
-      private static readonly GUIContent LABEL_NO_METHOD = new GUIContent("(No Method)");
-
-
-      private static string MakeSignature(MethodInfo method)
+      private static List<MethodChoice> FindMethodChoices(SerializedProperty prop, Object target, Type target_type, MethodInfo current)
       {
-        // heavily modified version of RichText.AppendSignature()
+        var choices = new List<MethodChoice>();
 
-        if (method == null)
-          return "<null>";
-
-        var bob = new System.Text.StringBuilder(method.Name).Append('(');
-
-        var parameters = method.GetParameters();
-        int i = 0, ilen = parameters.Length;
-        while (i < ilen)
-        {
-          bob.Append(parameters[i].ParameterType.GetRichLogName());
-
-          if (++i < ilen)
-            bob.Append(", ");
-        }
-
-        bob.Append(')');
-
-        return bob.ToString();
-      }
-
-      private static List<DelegateChoice> FindMethodChoices(SerializedProperty prop, Object target, Type target_type, MethodInfo current)
-      {
-        var choices = new List<DelegateChoice>();
+        bool has_target = !!target;
 
         if (target_type == null)
         {
-          if (target)
+          if (has_target)
             target_type = target.GetType();
           else
             return choices;
@@ -112,10 +121,9 @@ namespace PyroDK.Editor
 
         foreach (var method in target_type.GetMethods(TypeMembers.PUBLIC))
         {
-          if (SerialDelegate.IsValidMethod(method) &&
-             ( method.IsStatic || target ))
+          if (SerialDelegate.IsValidMethod(method) && ( method.IsStatic || has_target ))
           {
-            choices.Add(new DelegateChoice(prop, method, target, method == current));
+            choices.Add(new MethodChoice(prop, method, target, method == current));
           }
         }
 
@@ -124,39 +132,39 @@ namespace PyroDK.Editor
 
       private static GenericMenu BuildMethodPopup(SerializedProperty prop, Object target, Type target_type, MethodInfo current)
       {
-        var prop_method = prop.FindPropertyRelative("m_Method.m_Name");
-
-        var menu = new GenericMenu();
-
-        menu.AddItem(LABEL_NO_METHOD, on: current == null, () =>
+        using (var default_labels = Labels.Borrow("(No Method)"))
         {
-          prop_method.stringValue = null;
-          prop_method.serializedObject.ApplyModifiedProperties();
-        });
+          var prop_method = prop.FindPropertyRelative("m_Method.m_Name");
 
-        var choices = FindMethodChoices(prop, target, target_type, current);
+          var menu = new GenericMenu();
 
-        if (choices.Count > 0)
-        {
-          int count  = choices.Count;
-          var labels = Labels.Borrow(count);
-
-          for (int i = 0; i < count; ++i)
+          menu.AddItem(default_labels[0], on: current == null, () =>
           {
-            var label  = labels[i];
-            var choice = choices[i];
-            label.text = choice.Signature;
-            menu.AddItem(label, on: choice.IsCurrent, choice.Choose);
+            prop_method.stringValue = null;
+            prop_method.serializedObject.ApplyModifiedProperties();
+          });
+
+          var choices = FindMethodChoices(prop, target, target_type, current);
+
+          if (choices.Count > 0)
+          {
+            var labels = Labels.Borrow(choices.Count);
+
+            for (int i = 0; i < choices.Count; ++i)
+            {
+              labels[i].text = choices[i].Signature;
+              menu.AddItem(labels[i], on: choices[i].IsCurrent, choices[i].Choose);
+            }
+
+            labels.SafeDispose();
+          }
+          else
+          {
+            menu.AddDisabledItem(default_labels[0], true);
           }
 
-          labels.SafeDispose();
+          return menu;
         }
-        else
-        {
-          menu.AddDisabledItem(LABEL_NO_METHOD, true);
-        }
-
-        return menu;
       }
 
 
@@ -167,24 +175,21 @@ namespace PyroDK.Editor
 
       public override void OnGUI(Rect total, SerializedProperty prop, GUIContent label)
       {
-        if (prop.isExpanded)
-          DrawFieldBackground(in total);
+        DrawFieldBackground(in total);
 
-        total.yMin += EXTRA_VERTICAL_SPACE / 2f;
+        total.y += EXTRA_VERTICAL_SPACE / 2f;
+        total.height -= EXTRA_VERTICAL_SPACE;
 
         bool expand = FoldoutPrefixLabel(total, out Rect field, label, prop.isExpanded);
 
         if (prop.isExpanded)
         {
-          SerializedProperty prop_target = null;
-
           label.tooltip = string.Empty;
 
           var prop_declarer = prop.FindPropertyRelative("m_Method.m_Declarer");
-          var prop_static   = prop.FindPropertyRelative("m_Static");
+          var prop_target   = prop.FindPropertyRelative("m_Target");
 
-          bool  is_static = prop_static.boolValue;
-          float field_beg = field.x;
+          bool  is_static = !prop_target.objectReferenceValue;
 
           field.height = STD_LINE_HEIGHT;
 
@@ -194,8 +199,6 @@ namespace PyroDK.Editor
           }
           else
           {
-            prop_target = prop.FindPropertyRelative("m_Target");
-
             EditorGUI.BeginChangeCheck();
             EditorGUI.ObjectField(field, prop_target, GUIContent.none);
             if (EditorGUI.EndChangeCheck())
@@ -206,51 +209,56 @@ namespace PyroDK.Editor
 
           field.y += STD_LINE_ADVANCE;
 
-          field.x = total.x + STD_PAD_RIGHT;
-          field.xMax = field_beg - STD_PAD_RIGHT;
+          var left = new Rect(total.x + STD_PAD_RIGHT, field.y, 1f, STD_LINE_HEIGHT)
+          {
+            xMax = field.x - STD_PAD_RIGHT
+          };
 
           if (is_static)
-            label.text = "Switch to Non-Static";
-          else
-            label.text = "Switch to Static";
-
-          if (GUI.Button(field, label, Styles.ButtonSmall))
           {
-            prop_static.boolValue = !is_static;
+            label.text = "Go Old Fashioned (Instance)";
+            if (GUI.Button(left, label, Styles.ButtonSmall))
+            {
+              prop_declarer.stringValue = (prop_target.objectReferenceValue = prop.serializedObject.targetObject)
+                                            .GetType().GetQualifiedName();
+            }
+          }
+          else
+          {
+            label.text = "Engage Clutch (Static)";
+            if (GUI.Button(left, label, Styles.ButtonSmall))
+            {
+              prop_target.objectReferenceValue = null;
+            }
           }
 
-          field.x = field_beg;
-          field.xMax = total.xMax;
-
           if (m_Delegate.Method.IsMissing)
-            label.text = LABEL_NO_METHOD.text;
+            label.text = "(Missing!)";
           else
-            label.text = MakeSignature(m_Delegate.Method); // <--
+            label.text = MakeSignature(m_Delegate.Method, rich: true);
 
-          EditorGUI.BeginDisabledGroup(!Assemblies.FindType(prop_declarer.stringValue, out Type declarer));
-          if (GUI.Button(field, label, Styles.Defaults.Popup))
+          EditorGUI.BeginDisabledGroup(!Assemblies.FindTypeQuiet(prop_declarer.stringValue, out Type declarer));
+          if (GUI.Button(field, label, Styles.Popup))
           {
-            if (is_static)
-            {
-              BuildMethodPopup(prop, null, declarer, m_Delegate.Method)
-                .DropDown(field);
-            }
-            else
-            {
-              BuildMethodPopup(prop, prop_target.objectReferenceValue, null, m_Delegate.Method)
-                .DropDown(field);
-            }
+            BuildMethodPopup(prop, prop_target.objectReferenceValue, declarer, m_Delegate.Method)
+              .DropDown(field);
           }
           EditorGUI.EndDisabledGroup();
 
           // Additional line(s):
-
           if (m_ExtraLines > 1f)
           {
-            field.y += STD_LINE_ADVANCE;
-            //field.xMin = total.x + STD_PAD;
+            EditorGUI.BeginDisabledGroup(!m_Delegate.IsValid);
+            left.y += STD_LINE_ADVANCE;
+            label.text = "INVOKE";
+            if (GUI.Button(left, label, Styles.Button))
+            {
+              m_Delegate.Invoke(new object[m_Delegate.Method.ParameterCount]);
+            }
+            EditorGUI.EndDisabledGroup();
 
-            InvalidField(field, "[placeholder]");
+            field.y += STD_LINE_ADVANCE;
+            DrawRect(field, Colors.Debug.Important);
           }
         }
 
@@ -264,10 +272,13 @@ namespace PyroDK.Editor
 
         Debug.Assert(this.TryGetUnderlyingValue(prop, out m_Delegate));
 
-        if (m_Delegate.IsValid && m_Delegate.Method.ParameterTypes.Length > 0)
-          m_ExtraLines = 2f;
-        else
-          m_ExtraLines = 1f;
+        m_ExtraLines = 1f;
+
+        if (m_Delegate.IsValid)
+        {
+          // TODO this is currently giving falsely good results due to default parameters
+          m_ExtraLines += m_Delegate.Method.ParameterCount;
+        }
 
         return STD_LINE_HEIGHT +
                STD_LINE_ADVANCE * m_ExtraLines +

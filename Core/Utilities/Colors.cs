@@ -401,73 +401,51 @@ namespace PyroDK
   public static class Textures
   {
 
-    private const int BASIC_TEX_SZ = 16;
-
-    public static readonly Texture2D Clear = new Texture2D(BASIC_TEX_SZ, BASIC_TEX_SZ, TextureFormat.Alpha8, mipChain: false)
+    public static readonly Texture2D Clear = new Texture2D(1, 1, TextureFormat.Alpha8, mipChain: false)
     {
-      name                = "PyroDK.Textures.Clear",
-      //alphaIsTransparency = true,
-      filterMode          = FilterMode.Point,
-      wrapMode            = TextureWrapMode.Clamp,
-      wrapModeU           = TextureWrapMode.Clamp,
-      wrapModeV           = TextureWrapMode.Clamp,
-      wrapModeW           = TextureWrapMode.Clamp
+      name       = "PyroDK.Textures.Clear",
+      filterMode = FilterMode.Point,
+      wrapMode   = TextureWrapMode.Clamp,
+      wrapModeU  = TextureWrapMode.Clamp,
+      wrapModeV  = TextureWrapMode.Clamp,
+      wrapModeW  = TextureWrapMode.Clamp
     };
 
-    public static readonly Texture2D FieldBG = new Texture2D(BASIC_TEX_SZ, BASIC_TEX_SZ, TextureFormat.RGBA32, mipChain: false)
+    public static readonly Texture2D FieldBG = new Texture2D(1, 1, TextureFormat.RGBA32, mipChain: false)
     {
-      name                = "PyroDK.Textures.FieldBG",
-      //alphaIsTransparency = true,
-      filterMode          = FilterMode.Point,
-      wrapMode            = TextureWrapMode.Clamp,
-      wrapModeU           = TextureWrapMode.Clamp,
-      wrapModeV           = TextureWrapMode.Clamp,
-      wrapModeW           = TextureWrapMode.Clamp
+      name       = "PyroDK.Textures.FieldBG",
+      filterMode = FilterMode.Point,
+      wrapMode   = TextureWrapMode.Clamp,
+      wrapModeU  = TextureWrapMode.Clamp,
+      wrapModeV  = TextureWrapMode.Clamp,
+      wrapModeW  = TextureWrapMode.Clamp
     };
 
-    public static readonly Texture2D SectionBG = new Texture2D(BASIC_TEX_SZ, BASIC_TEX_SZ, TextureFormat.RGBA32, mipChain: false)
+    public static readonly Texture2D SectionBG = new Texture2D(1, 1, TextureFormat.RGBA32, mipChain: false)
     {
-      name        = "PyroDK.Textures.SectionBG",
-      filterMode  = FilterMode.Point,
-      wrapMode    = TextureWrapMode.Clamp,
-      wrapModeU   = TextureWrapMode.Clamp,
-      wrapModeV   = TextureWrapMode.Clamp,
-      wrapModeW   = TextureWrapMode.Clamp
+      name       = "PyroDK.Textures.SectionBG",
+      filterMode = FilterMode.Point,
+      wrapMode   = TextureWrapMode.Clamp,
+      wrapModeU  = TextureWrapMode.Clamp,
+      wrapModeV  = TextureWrapMode.Clamp,
+      wrapModeW  = TextureWrapMode.Clamp
     };
 
 
     static Textures()
     {
-      int len = BASIC_TEX_SZ * BASIC_TEX_SZ;
-      var pixels = new Color32[len];
-
-      for (int i = 0; i < len; ++i)
-      {
-        pixels[i] = Colors.Clear;
-      }
-
-      Clear.SetPixels32(pixels);
+      Clear.SetPixels32(new Color32[] { Colors.Clear });
       Clear.Apply(updateMipmaps: true, makeNoLongerReadable: true);
 
-      for (int i = 0; i < len; ++i)
-      {
-        pixels[i] = Colors.GUI.FieldBG;
-      }
-
-      FieldBG.SetPixels32(pixels);
+      FieldBG.SetPixels32(new Color32[] { Colors.GUI.FieldBG });
       FieldBG.Apply(updateMipmaps: true, makeNoLongerReadable: true);
 
-      for (int i = 0; i < len; ++i)
-      {
-        pixels[i] = Colors.GUI.SectionBG;
-      }
-
-      SectionBG.SetPixels32(pixels);
+      SectionBG.SetPixels32(new Color32[] { Colors.GUI.SectionBG });
       SectionBG.Apply(updateMipmaps: true, makeNoLongerReadable: true);
     }
 
 
-    public static Texture2D FindEditorTexture(string name)
+    public static Texture2D FindForEditor(string name)
     {
       #if UNITY_EDITOR
       return UnityEditor.EditorGUIUtility.FindTexture(name);

@@ -111,6 +111,7 @@ namespace PyroDK.Editor
           foldout_head.richText =
           s_Skin.button.richText =
           title.richText =
+          popup.richText =
           true;
 
         s_Skin.label.wordWrap =
@@ -195,6 +196,7 @@ namespace PyroDK.Editor
     public static GUIStyle Button           => s_Button ?? Defaults.Button;
     public static GUIStyle ButtonSmall      => s_ButtonSmall ?? Defaults.Button;
     public static GUIStyle ButtonBig        => s_ButtonBig ?? Defaults.Button;
+    public static GUIStyle Popup            => EditorStyles.popup;
     public static GUIStyle TitleBox         => s_TitleBox ?? Defaults.TitleBox;
     public static GUIStyle TitleText        => s_TitleText ?? Defaults.Label;
     public static GUIStyle TitleTextSmall   => s_TitleTextSmall ?? Defaults.Label;
@@ -204,13 +206,13 @@ namespace PyroDK.Editor
     {
       name = "PyroSection",
       overflow = new RectOffset(22, 22, 4, 2),
-    } .SetBackgroundTexture(Textures.SectionBG);
+    };
 
     public static readonly GUIStyle Box = new GUIStyle()
     {
       name = "PyroBox",
       overflow = new RectOffset(4, 2, 2, 2)
-    } .SetBackgroundTexture(Textures.FieldBG);
+    };
 
 
     private static GUIStyle s_Label;
@@ -263,6 +265,9 @@ namespace PyroDK.Editor
 
       PyroLabelFont.name = "PyroLabelFont";
       PyroMonoFont.name  = "PyroMonoFont";
+
+      Section.SetBackgroundTexture(Textures.SectionBG);
+      Box.SetBackgroundTexture(Textures.FieldBG);
 
       s_Label = new GUIStyle(Defaults.Label)
       {
@@ -390,25 +395,25 @@ namespace PyroDK.Editor
       {
         richText = true,
         clipping = TextClipping.Clip,
-        fixedHeight = GUIDrawers.STD_LINE_HEIGHT + 2f,
         font = PyroLabelFont,
         fontStyle = FontStyle.Normal,
         fontSize = 12,
         alignment = TextAnchor.MiddleCenter,
         padding = new RectOffset(4, 4, 1, 1),
+        fixedHeight = GUIDrawers.STD_LINE_HEIGHT + 1f,
       };
 
       s_ButtonSmall = new GUIStyle(s_Button)
       {
-        fixedHeight = s_Button.fixedHeight - 4f,
         fontSize = 10,
+        fixedHeight = GUIDrawers.STD_LINE_HEIGHT - 1f,
       };
 
       s_ButtonBig = new GUIStyle(s_Button)
       {
-        fixedHeight = s_Button.fixedHeight * 2f - 4f,
         fontStyle = FontStyle.Bold,
         fontSize = 14,
+        fixedHeight = GUIDrawers.STD_LINE_HEIGHT * 2f + 3f,
       };
 
       s_TitleBox = new GUIStyle(Defaults.TitleBox)

@@ -148,18 +148,11 @@ namespace PyroDK
 
 
 
-    public static void Reached(bool is_error = false, object blame = null)
+    public static void Reached(object blame = null)
     {
       const string REACHED_MESSAGE = "<b><i>Reached!</i></b>";
 
-      if (is_error)
-      {
-        LogError(REACHED_MESSAGE, ctx: blame, full_stack: false);
-      }
-      else
-      {
-        LogImportant(REACHED_MESSAGE, ctx: blame, full_stack: false);
-      }
+      LogImportant(REACHED_MESSAGE, ctx: blame, full_stack: false);
     }
 
 

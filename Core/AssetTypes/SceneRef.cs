@@ -392,8 +392,8 @@ namespace PyroDK
     [SerializeField] [RequireInterface("UnityEditor.SceneAsset, UnityEditor", HighlightMissing = true)]
     private Object m_SceneAsset;
 
-    [SerializeField]
-    private FilePath m_ScenePath = FilePath.MakeReadOnly();
+    [SerializeField] [ReadOnly]
+    private FilePath m_ScenePath = new FilePath();
 
     [SerializeField] [ReadOnly]
     private int m_BuildIndex = int.MinValue;
@@ -810,7 +810,7 @@ namespace PyroDK
       else
       {
         m_SceneAsset = asset;
-        m_ScenePath.Set(path);
+        m_ScenePath.SetLax(path);
 
         var tribool = Scenes.IsEnabledInBuildList(path, out int real_idx, out int build_idx);
 

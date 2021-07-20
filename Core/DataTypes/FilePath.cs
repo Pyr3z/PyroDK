@@ -39,8 +39,9 @@ namespace PyroDK
 
     ReadOnly    = (1 <<  7), // Editor
     DirsOnly    = (1 <<  8), // Editor
+    FileOnly    = (1 <<  9), // Editor
 
-    EditorMask  = ( ReadOnly | DirsOnly ),
+    EditorMask  = ( ReadOnly | DirsOnly | FileOnly ),
     RuntimeMask = ~EditorMask,
   }
 
@@ -91,31 +92,12 @@ namespace PyroDK
     public bool HasExtension  => m_Flags.HasFlag(FilePathFlags.Extension);
 
 
-      
     [SerializeField]
-    private string        m_Path;
-    [SerializeField] [HideInInspector]
     private FilePathFlags m_Flags;
 
+    [SerializeField]
+    private string        m_Path;
 
-
-    public static FilePath MakeReadOnly()
-    {
-      var read_only = new FilePath();
-
-      read_only.m_Flags |= FilePathFlags.ReadOnly;
-
-      return read_only;
-    }
-
-    public static FilePath MakeDirsOnly()
-    {
-      var dirs_only = new FilePath();
-
-      dirs_only.m_Flags |= FilePathFlags.DirsOnly;
-
-      return dirs_only;
-    }
 
     public static FilePath MakeAssetPath(string filename)
     {
@@ -126,21 +108,43 @@ namespace PyroDK
 
     public FilePath()
     {
-      m_Flags = FilePathFlags.Asset | FilePathFlags.Directory | FilePathFlags.Exists | FilePathFlags.Relative;
-      m_Path  = "Assets/";
+      m_Flags = FilePathFlags.None;
+      m_Path  = "";
     }
     public FilePath(string path)
     {
-      m_Flags = Filesystem.GetPathFlags(path);
-      m_Path  = path.Replace(Filesystem.BAD_DIRECTORY_SEPARATOR, Filesystem.DIRECTORY_SEPARATOR);
-
-      if (m_Flags.HasFlag(FilePathFlags.Asset) && !Filesystem.TryMakeAssetPath(ref m_Path))
-      {
-        m_Flags &= ~FilePathFlags.Asset;
-      }
+      m_Flags = Filesystem.FixUpRawPath(ref path);
+      m_Path  = path;
     }
     private FilePath(bool trash)
     {
+    }
+
+
+    public FilePath MakeReadOnly()
+    {
+      m_Flags |= FilePathFlags.ReadOnly;
+      return this;
+    }
+
+    public FilePath RestrictToDirectories()
+    {
+      if (m_Flags.HasFlag(FilePathFlags.File))
+        Clear();
+
+      m_Flags |= FilePathFlags.DirsOnly;
+
+      return this;
+    }
+
+    public FilePath RestrictToFiles()
+    {
+      if (m_Flags.HasFlag(FilePathFlags.Directory))
+        Clear();
+
+      m_Flags |= FilePathFlags.FileOnly;
+
+      return this;
     }
 
 
@@ -176,11 +180,11 @@ namespace PyroDK
 
 
 
-    public bool TrySet(string path)
+    public bool Set(string path)
     {
-      var flags = Filesystem.TryFixUpPath(ref path);
+      var flags = Filesystem.FixUpRawPath(ref path, EditorFlags);
 
-      if (flags == FilePathFlags.Invalid || (flags == RuntimeFlags && path == m_Path))
+      if (flags.HasFlag(FilePathFlags.Invalid) || (flags == RuntimeFlags && path == m_Path))
         return false;
       
       m_Path  = path;
@@ -188,11 +192,10 @@ namespace PyroDK
       return true;
     }
 
-    public bool Set(string path)
+    public bool SetLax(string path) // subtle difference: this one allows invalid paths to be set
     {
-      var flags = Filesystem.TryFixUpPath(ref path);
+      var flags = Filesystem.FixUpRawPath(ref path, EditorFlags);
 
-      // subtle difference: this method allows invalid paths to be set!
       if (flags == RuntimeFlags && path == m_Path)
         return false;
 
@@ -200,6 +203,13 @@ namespace PyroDK
       m_Flags = flags | EditorFlags;
       return true;
     }
+
+    public void SetRaw(FilePathFlags flags, string path)
+    {
+      m_Flags = flags;
+      m_Path  = path;
+    }
+
 
     public void Clear()
     {
@@ -259,13 +269,12 @@ namespace PyroDK
     {
       if (this.IsEmpty())
         return path.IsEmpty();
+
       if (path.IsEmpty())
         return false;
 
-      var flags = Filesystem.TryFixUpPath(ref path);
-
       // TODO test this for odd cases and efficiency.
-      return GetHashCode() == Hashing.MakeHash(path, flags);
+      return GetHashCode() == Hashing.MakeHash(path, Filesystem.FixUpRawPath(ref path));
     }
 
     public bool EqualsUnfixed(string other)
@@ -297,22 +306,23 @@ namespace PyroDK
     }
 
 
-
     object System.ICloneable.Clone()
     {
       return Clone();
     }
 
-
-
     void ISerializationCallbackReceiver.OnBeforeSerialize()
     {
       RuntimeFlags = Filesystem.GetPathFlags(m_Path);
+      
+      if (IsValid)
+      {
+        m_Path = m_Path.Replace(Filesystem.BAD_DIRECTORY_SEPARATOR, Filesystem.DIRECTORY_SEPARATOR);
+      }
     }
 
     void ISerializationCallbackReceiver.OnAfterDeserialize()
     {
-      //RuntimeFlags = GetPathFlags(m_Path);
     }
 
 
@@ -335,7 +345,7 @@ namespace PyroDK
 
     public static bool IsEmpty(this FilePath path)
     {
-      return Equals(path, null) || path.RawString.IsEmpty();
+      return path == null || path.RawString.IsEmpty();
     }
 
 
@@ -360,8 +370,7 @@ namespace PyroDK
         else if (IsValidFileName(file))
           result = FilePathFlags.File | FilePathFlags.Directory;
 
-        if (result.HasFlag(FilePathFlags.File) &&
-            ExtractFileExtension(file).Length > 0)
+        if (result.HasFlag(FilePathFlags.File) && ExtractFileExtension(file).Length > 0)
           result = (result & ~FilePathFlags.Directory) | FilePathFlags.Extension;
       }
 
@@ -374,22 +383,30 @@ namespace PyroDK
       return result;
     }
 
-    public static FilePathFlags TryFixUpPath(ref string path)
+    public static FilePathFlags FixUpRawPath(ref string path, FilePathFlags preflags = FilePathFlags.None)
     {
       var result = GetPathFlags(path);
 
-      if (result.HasFlag(FilePathFlags.Invalid))
-        return FilePathFlags.Invalid;
-
-      path = path.Replace(BAD_DIRECTORY_SEPARATOR, DIRECTORY_SEPARATOR);
-
-      if (result.HasFlag(FilePathFlags.Asset) &&
-          !TryMakeAssetPath(ref path))
+      if (!result.HasFlag(FilePathFlags.Invalid))
       {
-        return result & ~FilePathFlags.Asset;
+        if (result.HasFlag(FilePathFlags.Asset) && !TryMakeAssetPath(ref path))
+        {
+          result &= ~FilePathFlags.Asset;
+        }
+
+        if (preflags.HasFlag(FilePathFlags.DirsOnly))
+        {
+          if (!result.HasFlag(FilePathFlags.Directory))
+            result |= FilePathFlags.Invalid;
+        }
+        else if (preflags.HasFlag(FilePathFlags.FileOnly))
+        {
+          if (!result.HasFlag(FilePathFlags.File))
+            result |= FilePathFlags.Invalid;
+        }
       }
 
-      return result;
+      return result | preflags;
     }
 
   } // end static partial class Filesystem

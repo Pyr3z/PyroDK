@@ -32,7 +32,7 @@ namespace PyroDK
 
 
 
-    public ReadOnlyAttribute(System.Type custom_drawer = null)
+    public ReadOnlyAttribute(Type custom_drawer = null)
     {
       CustomDrawerType    = custom_drawer;
       CustomDrawerString  = null;

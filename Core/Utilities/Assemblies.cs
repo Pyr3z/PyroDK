@@ -53,6 +53,19 @@ namespace PyroDK
       return type != null;
     }
 
+    public static bool FindTypeQuiet(string typename, out Type type)
+    {
+      try
+      {
+        return FindType(typename, out type);
+      }
+      catch (System.ArgumentException)
+      {
+        type = null;
+        return false;
+      }
+    }
+
     public static bool FindSubType(string typename, Type base_type, out Type type)
     {
       if (typename.IsEmpty() || typename.EndsWithAny(' ', ','))

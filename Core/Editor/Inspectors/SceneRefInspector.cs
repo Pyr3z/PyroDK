@@ -46,11 +46,15 @@ namespace PyroDK.Editor
         }
         else
         {
+          EditorGUI.BeginDisabledGroup(!sref.HasReference);
+
           Labels.Button.text = RichText.Bold(RichText.Value("Open Scene as ", sref.Type));
           if (GUILayout.Button(Labels.Button, Styles.ButtonBig))
           {
             sref.Load();
           }
+
+          EditorGUI.EndDisabledGroup();
         }
 
         while (curr_prop.NextVisible(enterChildren: false))

@@ -43,6 +43,12 @@ namespace PyroDK.Editor
     public abstract class BaseInspector : UnityEditor.Editor
     {
 
+      public override bool RequiresConstantRepaint()
+      {
+        // TODO determine if this is OK to use en masse
+        return true;
+      }
+
       protected override void OnHeaderGUI() // only shows for Assets
       {
         EditorGUILayout.BeginHorizontal(Styles.TitleBox);
