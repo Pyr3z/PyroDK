@@ -216,7 +216,7 @@ namespace PyroDK.Editor
 
           if (is_static)
           {
-            label.text = "Go Old Fashioned (Instance)";
+            label.text = "Switch: Instance";
             if (GUI.Button(left, label, Styles.ButtonSmall))
             {
               prop_declarer.stringValue = (prop_target.objectReferenceValue = prop.serializedObject.targetObject)
@@ -225,7 +225,7 @@ namespace PyroDK.Editor
           }
           else
           {
-            label.text = "Engage Clutch (Static)";
+            label.text = "Switch: Static";
             if (GUI.Button(left, label, Styles.ButtonSmall))
             {
               prop_target.objectReferenceValue = null;

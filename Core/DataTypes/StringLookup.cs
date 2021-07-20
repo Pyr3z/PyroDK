@@ -17,12 +17,17 @@ namespace PyroDK
   public sealed class StringLookup : Lookup<StringLookup.KVP, string>
   {
     [System.Serializable]
-    public sealed class KVP : BaseSerialKVP<string, string>
+    public sealed class KVP : SerialKVP<string, string>
     {
     }
 
 
-    public StringLookup(HashMapParams parms = default) : base(parms)
+    public StringLookup(HashMapParams parms) : base(parms)
+    {
+      m_HashMap.SetValueEquals(string.Equals);
+    }
+
+    public StringLookup() : base()
     {
       m_HashMap.SetValueEquals(string.Equals);
     }

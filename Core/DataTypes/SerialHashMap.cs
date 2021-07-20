@@ -28,7 +28,7 @@ namespace PyroDK
 
   [System.Serializable]
   public abstract class SerialHashMap<TPair, TKey, TValue> : IMap<TKey, TValue>, ISerializationCallbackReceiver
-    where TPair : BaseSerialKVP<TKey, TValue>, new()
+    where TPair : SerialKVP<TKey, TValue>, new()
   {
 
     public virtual Type KeyType   => typeof(TKey);
@@ -72,14 +72,14 @@ namespace PyroDK
     protected System.Func<TValue, bool> m_IsValidValue = null;
     
 
-    public SerialHashMap(HashMapParams parms = default)
+    public SerialHashMap(HashMapParams parms)
     {
-      if (parms.Check())
-        m_SerialParams = parms;
-      else
-        m_SerialParams = HashMapParams.Default;
+      Debug.Assert(parms.Check());
+      m_HashMap = new HashMap<TKey, TValue>(m_SerialParams = parms);
+    }
 
-      m_HashMap = new HashMap<TKey, TValue>(m_SerialParams);
+    public SerialHashMap() : this(HashMapParams.Default)
+    {
     }
 
 
@@ -295,7 +295,7 @@ namespace PyroDK
       if (!Filesystem.TryMakeAbsolutePath(path, out path) || !File.Exists(path))
         return false;
 
-      var json = File.ReadAllText(path);
+      string json = File.ReadAllText(path);
 
       if (json.IsEmpty())
         return false;

@@ -1,5 +1,5 @@
 ﻿/**
-@file   PyroDK/Core/DataTypes/TypedStringKey.cs
+@file   PyroDK/Core/DataTypes/TypedKey.cs
 @author Levi Perez (Pyr3z)
 @author levi@leviperez.dev
 @date   2020-10-22
@@ -16,24 +16,40 @@ namespace PyroDK
 {
 
   [System.Serializable]
-  public struct TypedStringKey : System.IEquatable<TypedStringKey>
+  public struct TypedKey : System.IEquatable<TypedKey>
   {
+    //public static TypedKey Scratch = new TypedKey()
+    //{
+    //  Type = SerialTypeCode.Null,
+    //  String = string.Empty
+    //};
 
-    public static TypedStringKey ScratchKey = new TypedStringKey()
+    public static TypedKey Make(SerialTypeCode type, string key)
     {
-      Type = SerialTypeCode.Null,
-      String = string.Empty
-    };
+      return new TypedKey()
+      {
+        Type   = type,
+        String = key
+      };
+    }
+
+    public static TypedKey Make<T>(string key)
+    {
+      return new TypedKey()
+      {
+        Type   = TSpy<T>.SerialCode,
+        String = key
+      };
+    }
 
 
     [SerializeField]
     public SerialTypeCode Type;
-
     [SerializeField]
-    public string String;
+    public string         String;
 
 
-    public bool Set<TValue>(string key)
+    public bool CheckedSet<TValue>(string key)
     {
       if (TSpy<TValue>.SerialCode > SerialTypeCode.Unsupported)
       {
@@ -57,14 +73,21 @@ namespace PyroDK
 
     public override bool Equals(object obj)
     {
-      return (obj is TypedStringKey other && Equals(other));
+      return (obj is TypedKey other && Equals(other));
     }
 
-    public bool Equals(TypedStringKey other)
+    public bool Equals(TypedKey other)
     {
       return  Type == other.Type &&
               string.Equals(String, other.String);
     }
+
+
+    public static implicit operator bool (TypedKey tkey)
+    {
+      return tkey.Type > SerialTypeCode.Unsupported && tkey.String != null;
+    }
+
   }
 
 }

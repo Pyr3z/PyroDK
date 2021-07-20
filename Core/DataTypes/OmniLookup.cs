@@ -1,11 +1,11 @@
 ﻿/**
-@file   PyroDK/Core/DataTypes/SerialValueMap.cs
+@file   PyroDK/Core/DataTypes/OmniLookup.cs
 @author Levi Perez (Pyr3z)
 @author levi@leviperez.dev
 @date   2020-10-10
 
 @brief
-  A generic IMap type that stores key-value pairs of semi-generic
+  A generic map type that stores key-value pairs of semi-generic
   value types (those that are easy to serialize in Unity).
 **/
 
@@ -22,18 +22,18 @@ namespace PyroDK
 
 
   [System.Serializable]
-  public sealed class SerialValueMap :
-    IMap<TypedStringKey, object>,
+  public sealed class OmniLookup :
+    IMap<TypedKey, object>,
     ISerializationCallbackReceiver
   {
     [System.Serializable]
-    private sealed class KVP : BaseSerialKVP<TypedStringKey, string>
+    private sealed class KVP : SerialKVP<TypedKey, string>
     {
       [SerializeField]
       public SerialType StrictRefType = SerialType.Invalid;
 
 
-      public KVP(TypedStringKey key, object val)
+      public KVP(TypedKey key, object val)
       {
         Key = key;
 
@@ -45,11 +45,11 @@ namespace PyroDK
     }
 
 
-    public Type KeyType   => typeof(TypedStringKey);
+    public Type KeyType   => typeof(TypedKey);
     public Type ValueType => typeof(object);
 
 
-    public object this[TypedStringKey key]
+    public object this[TypedKey key]
     {
       get
       {
@@ -77,8 +77,8 @@ namespace PyroDK
     public int  Count       => m_Pairs.Count;
     public bool IsFixedSize => m_SerialParams.IsFixedSize;
 
-    public bool IncompleteDeserialize =>  ( m_HashMap == null ) ||
-                                          ( m_Pairs.Count != m_HashMap.Count ); // bad condition?
+    public bool IncompleteDeserialize => ( m_HashMap == null ) ||
+                                         ( m_Pairs.Count != m_HashMap.Count ); // bad condition?
 
 
     [SerializeField]
@@ -91,10 +91,10 @@ namespace PyroDK
 
 
     [System.NonSerialized]
-    private HashMap<TypedStringKey, object> m_HashMap;
+    private HashMap<TypedKey, object> m_HashMap;
 
 
-    public SerialValueMap(HashMapParams parms = default)
+    public OmniLookup(HashMapParams parms)
     {
       if (parms.Check())
       {
@@ -102,81 +102,127 @@ namespace PyroDK
       }
       else
       {
-        $"Given HashMapParams contained invalid values: {parms}"
+        $"Given HashMapParams contained invalid values:\n{parms}"
           .LogWarning();
         m_SerialParams = HashMapParams.Default;
       }
 
-      m_HashMap = new HashMap<TypedStringKey, object>(m_SerialParams);
+      m_HashMap = new HashMap<TypedKey, object>(m_SerialParams);
     }
 
-    public SerialValueMap(int user_capacity) :
+    public OmniLookup() :
+      this(HashMapParams.Default)
+    {
+    }
+
+    public OmniLookup(int user_capacity) :
       this(new HashMapParams(user_capacity))
     {
     }
 
 
-    public bool Find<TValue>(string key, out TValue value)
+    public bool Find(TypedKey key, out object value)
     {
-      value = default;
-
-      if (TypedStringKey.ScratchKey.Set<TValue>(key) &&
-          Find(TypedStringKey.ScratchKey, out object boxed))
+      if (!key)
       {
-        if (boxed == null)
-        {
-          return TypedStringKey.ScratchKey.Type >= SerialTypeCode.RefAssetObject;
-        }
-
-        value = (TValue)boxed;
-        return true;
+        value = null;
+        return false;
       }
-
-      return false;
-    }
-
-    public bool Find(TypedStringKey key, out object value)
-    {
-      if (key.Type >= SerialTypeCode.RefAssetObject)
+      else if (key.Type >= SerialTypeCode.RefAssetObject)
       {
-        if (m_HashMap.Find(key, out value))
-        {
-          // perform deferred JSON deserialization for reference types:
-          if (value is string deferred_json)
-          {
-            if (Serializer.FromJsonWrapped(deferred_json, out Object unity_obj) &&
-                m_HashMap.Remap(key, unity_obj))
-            {
-              value = unity_obj;
-              return SetDirty();
-            }
-            else
-            {
-              return false;
-            }
-          }
-          else
-          {
-            // found value is already parsed
-            return true;
-          }
-        }
-        else
-        {
-          // no entry found at `key`
+        if (!m_HashMap.Find(key, out value))
           return false;
+
+        if (!(value is string deferred_json))
+          return true; // already deserialized
+
+        // ref types may need to be deserialized from a JSON string:
+        if (Serializer.FromJsonWrapped(deferred_json, out Object unity_obj) &&
+            m_HashMap.Remap(key, unity_obj))
+        {
+          value = unity_obj;
+          return SetDirty();
         }
+
+        return false;
       }
       else
       {
         return m_HashMap.Find(key, out value) && value != null;
       }
     }
-
-
-    public bool Contains(TypedStringKey key)
+    public bool Find(SerialTypeCode type, string key, out object value)
     {
-      return m_HashMap.Contains(key);
+      return Find(TypedKey.Make(type, key), out value);
+    }
+    public bool Find<TValue>(string key, out TValue value)
+    {
+      value = default;
+
+      if (Find(TypedKey.Make<TValue>(key), out object boxed) &&
+          boxed is TValue unboxed)
+      {
+        value = unboxed;
+        return true;
+      }
+
+      return false;
+    }
+
+
+    public bool Contains(TypedKey key)
+    {
+      return key && m_HashMap.Contains(key);
+    }
+    public bool Contains(SerialTypeCode type, string key)
+    {
+      return Contains(TypedKey.Make(type, key));
+    }
+    public bool Contains<TValue>(string key)
+    {
+      return Contains(TypedKey.Make<TValue>(key));
+    }
+
+
+    public bool Map(TypedKey key, object value)
+    {
+      return key && m_HashMap.Map(key, value) && SetDirty();
+    }
+    public bool Map(SerialTypeCode type, string key, object value)
+    {
+      return Map(TypedKey.Make(type, key), value);
+    }
+    public bool Map<TValue>(string key, TValue value)
+    {
+      return Map(TypedKey.Make<TValue>(key), value);
+    }
+
+
+    public bool Remap(TypedKey key, object value)
+    {
+      return key && m_HashMap.Remap(key, value) && SetDirty();
+    }
+    public bool Remap(SerialTypeCode type, string key, object value)
+    {
+      return Remap(TypedKey.Make(type, key), value);
+    }
+    public bool Remap<TValue>(string key, TValue value)
+    {
+      return Remap(TypedKey.Make<TValue>(key), value);
+    }
+
+
+    public bool Unmap(TypedKey key)
+    {
+      return key && m_HashMap.Unmap(key) && SetDirty();
+    }
+    public bool Unmap(SerialTypeCode type, string key)
+    {
+      return Unmap(TypedKey.Make(type, key));
+    }
+    public bool Unmap<TValue>(string key)
+    {
+      return Unmap(TypedKey.Make<TValue>(key));
     }
 
 
@@ -188,43 +234,7 @@ namespace PyroDK
     }
 
 
-    public bool Map<TValue>(string key, TValue value)
-    {
-      return  TypedStringKey.ScratchKey.Set<TValue>(key) &&
-              m_HashMap.Map(TypedStringKey.ScratchKey, value) && SetDirty();
-    }
-
-    public bool Remap<TValue>(string key, TValue value)
-    {
-      return  TypedStringKey.ScratchKey.Set<TValue>(key) &&
-              m_HashMap.Remap(TypedStringKey.ScratchKey, value) && SetDirty();
-    }
-
-    public bool Unmap<TValue>(string key)
-    {
-      return  TypedStringKey.ScratchKey.Set<TValue>(key) &&
-              m_HashMap.Unmap(TypedStringKey.ScratchKey) && SetDirty();
-    }
-
-
-    public bool Map(TypedStringKey key, object value)
-    {
-      return m_HashMap.Map(key, value) && SetDirty();
-    }
-
-    public bool Remap(TypedStringKey key, object value)
-    {
-      return m_HashMap.Remap(key, value) && SetDirty();
-    }
-
-
-    public bool Unmap(TypedStringKey key)
-    {
-      return m_HashMap.Unmap(key) && SetDirty();
-    }
-
-
-    public bool Set(IReadOnlyCollection<TypedStringKey> keys, IReadOnlyCollection<object> values)
+    public bool Set(IReadOnlyCollection<TypedKey> keys, IReadOnlyCollection<object> values)
     {
       return m_HashMap.Set(keys, values) && SetDirty();
     }
@@ -260,11 +270,11 @@ namespace PyroDK
         "\"m_SerialParams\" were invalid; resetting to default params."
           .LogWarning();
 
-        m_HashMap = new HashMap<TypedStringKey, object>(m_SerialParams = HashMapParams.Default);
+        m_HashMap = new HashMap<TypedKey, object>(m_SerialParams = HashMapParams.Default);
       }
       else if (m_HashMap == null)
       {
-        m_HashMap = new HashMap<TypedStringKey, object>(m_SerialParams);
+        m_HashMap = new HashMap<TypedKey, object>(m_SerialParams);
       }
 
       int n = m_Pairs.Count;
@@ -285,15 +295,15 @@ namespace PyroDK
           {
             boxed_vals[i] = null;
           }
-          else if (Serializer.TryParseString(pair.Value, pair.Key.Type, out object boxed_val))
+          else if (Serializer.TryParseString(pair.Value, pair.Key.Type, out object boxed))
           {
-            if (pair.StrictRefType && !pair.StrictRefType.AssignableFrom(boxed_val))
+            if (pair.StrictRefType && !pair.StrictRefType.AssignableFrom(boxed))
             {
               boxed_vals[i] = null;
             }
             else
             {
-              boxed_vals[i] = boxed_val;
+              boxed_vals[i] = boxed;
             }
           }
           else
@@ -313,7 +323,7 @@ namespace PyroDK
         }
 
         if (m_HashMap.GrowTo(user_cap: n, rehash: false) &&
-            m_HashMap.Set(m_Pairs.GetKeys<KVP, TypedStringKey, string>(), boxed_vals))
+            m_HashMap.Set(m_Pairs.GetKeys<KVP, TypedKey, string>(), boxed_vals))
         {
           m_SerialParams.MinUserCapacity = m_HashMap.Capacity;
         }
@@ -324,7 +334,7 @@ namespace PyroDK
 
 
 
-    public IEnumerator<(TypedStringKey key, object value)> GetEnumerator()
+    public IEnumerator<(TypedKey key, object value)> GetEnumerator()
     {
       return m_HashMap.GetEnumerator();
     }

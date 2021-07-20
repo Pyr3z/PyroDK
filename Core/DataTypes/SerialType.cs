@@ -15,6 +15,7 @@ namespace PyroDK
 {
   using Type = System.Type;
 
+
   [System.Serializable]
   public struct SerialType : System.IEquatable<SerialType>, System.IEquatable<Type>
   {

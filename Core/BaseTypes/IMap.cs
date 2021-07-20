@@ -109,11 +109,15 @@ namespace PyroDK
   }
 
   public abstract class Lookup<TPair, TValue> : SerialHashMap<TPair, string, TValue>, ILookup<TValue>
-    where TPair : BaseSerialKVP<string, TValue>, new()
+    where TPair : SerialKVP<string, TValue>, new()
   {
-    protected Lookup(HashMapParams parms = default) : base(parms)
+    protected Lookup(HashMapParams parms) : base(parms)
     {
       m_IsValidKey = IsValidString;
+    }
+
+    protected Lookup() : base()
+    {
     }
 
 

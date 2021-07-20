@@ -137,6 +137,12 @@ namespace PyroDK
     }
 
 
+    public static bool HasDefaultConstructor(this Type type)
+    {
+      return type.IsValueType || type.GetConstructor(Type.EmptyTypes) != null;
+    }
+
+
     public static Type GetListElementType(this Type type)
     {
       if (type.IsArray)
@@ -160,7 +166,7 @@ namespace PyroDK
         Object none = null;
         return none;
       }
-      else if (type.IsValueType || null != type.GetConstructor(Type.EmptyTypes))
+      else if (HasDefaultConstructor(type))
       {
         // this will fail for any type without a default constructor.
         return System.Activator.CreateInstance(type);

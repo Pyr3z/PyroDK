@@ -36,6 +36,8 @@ namespace PyroDK
 
     public PyroEvent TestPyroEvent;
     public List<PyroEvent> TestPyroEvents = new List<PyroEvent>();
+
+    public StringLookup TestStringDictionary = new StringLookup();
   }
 
   #else

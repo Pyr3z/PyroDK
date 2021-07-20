@@ -21,7 +21,7 @@ using UnityEngine.UI;
 namespace PyroDK
 {
 
-  [AddComponentMenu("PyroDK/Singletons/Root Scene (Core)")]
+  [AddComponentMenu("PyroDK/Singletons/Root Scene Controller")]
   public class RootScene : BaseSingleton<RootScene>
   {
 

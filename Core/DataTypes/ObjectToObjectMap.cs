@@ -20,7 +20,7 @@ namespace PyroDK
     #region Public Static Section
 
     [System.Serializable]
-    public sealed class KVP : BaseSerialKVP<Object, Object>
+    public sealed class KVP : SerialKVP<Object, Object>
     {
     }
 

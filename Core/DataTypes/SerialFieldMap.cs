@@ -20,7 +20,7 @@ namespace PyroDK
   public sealed class SerialFieldMap : SerialHashMap<SerialFieldMap.KVP, SerialFieldInfo, string>
   {
     [System.Serializable]
-    public sealed class KVP : BaseSerialKVP<SerialFieldInfo, string>
+    public sealed class KVP : SerialKVP<SerialFieldInfo, string>
     {
     }
 

@@ -305,6 +305,8 @@ namespace PyroDK
     public static readonly Comparer Comparator = new Comparer();
 
 
+    public static Color32 Clear = FromHex("#FFFFFF00");
+
     public static Color32 Black = FromHex("#000000FF");
     public static Color32 White = FromHex("#FFFFFFFF");
     public static Color32 Gray  = FromHex("#888888FF");
@@ -312,7 +314,6 @@ namespace PyroDK
     public static Color32 Red   = FromHex("#FF0000FF");
     public static Color32 Green = FromHex("#00FF00FF");
     public static Color32 Blue  = FromHex("#0000FFFF");
-    public static Color32 Clear = FromHex("#FFFFFF00");
 
     public static Color32 Yellow = FromHex("#FFFF00FF");
 
@@ -338,7 +339,7 @@ namespace PyroDK
       [SerializeStatic]
       public static Color32 Error                 = FromHex("#910329FF");
 
-    }
+    } // end class Debug
 
 
     public static class GUI
@@ -388,72 +389,12 @@ namespace PyroDK
       public static Color32 SectionBG             = FromHex("#121010FF"); // ~ 383636, 3B4545
 
       [SerializeStatic]
-      public static Color32 HashMapBG             = FromHex("#0B1111FF");
+      public static Color32 HashMapBG             = FromHex("#2C2A2ADB");
       [SerializeStatic]
-      public static Color32 HashMapOutline        = FromHex("#3A4545FF");
+      public static Color32 HashMapOutline        = FromHex("#1D2424FF");
 
-    }
+    } // end class GUI
 
-  }
-
-
-  // TODO move to separate file
-  public static class Textures
-  {
-
-    public static readonly Texture2D Clear = new Texture2D(1, 1, TextureFormat.Alpha8, mipChain: false)
-    {
-      name       = "PyroDK.Textures.Clear",
-      filterMode = FilterMode.Point,
-      wrapMode   = TextureWrapMode.Clamp,
-      wrapModeU  = TextureWrapMode.Clamp,
-      wrapModeV  = TextureWrapMode.Clamp,
-      wrapModeW  = TextureWrapMode.Clamp
-    };
-
-    public static readonly Texture2D FieldBG = new Texture2D(1, 1, TextureFormat.RGBA32, mipChain: false)
-    {
-      name       = "PyroDK.Textures.FieldBG",
-      filterMode = FilterMode.Point,
-      wrapMode   = TextureWrapMode.Clamp,
-      wrapModeU  = TextureWrapMode.Clamp,
-      wrapModeV  = TextureWrapMode.Clamp,
-      wrapModeW  = TextureWrapMode.Clamp
-    };
-
-    public static readonly Texture2D SectionBG = new Texture2D(1, 1, TextureFormat.RGBA32, mipChain: false)
-    {
-      name       = "PyroDK.Textures.SectionBG",
-      filterMode = FilterMode.Point,
-      wrapMode   = TextureWrapMode.Clamp,
-      wrapModeU  = TextureWrapMode.Clamp,
-      wrapModeV  = TextureWrapMode.Clamp,
-      wrapModeW  = TextureWrapMode.Clamp
-    };
-
-
-    static Textures()
-    {
-      Clear.SetPixels32(new Color32[] { Colors.Clear });
-      Clear.Apply(updateMipmaps: true, makeNoLongerReadable: true);
-
-      FieldBG.SetPixels32(new Color32[] { Colors.GUI.FieldBG });
-      FieldBG.Apply(updateMipmaps: true, makeNoLongerReadable: true);
-
-      SectionBG.SetPixels32(new Color32[] { Colors.GUI.SectionBG });
-      SectionBG.Apply(updateMipmaps: true, makeNoLongerReadable: true);
-    }
-
-
-    public static Texture2D FindForEditor(string name)
-    {
-      #if UNITY_EDITOR
-      return UnityEditor.EditorGUIUtility.FindTexture(name);
-      #else
-      return null;
-      #endif
-    }
-
-  }
+  } // end class Colors
 
 }

@@ -1,5 +1,5 @@
 ﻿/**
-@file   PyroDK/Core/AssetTypes/StringLookupAsset.cs
+@file   PyroDK/Core/AssetTypes/DictionaryAsset.cs
 @author Levi Perez (Pyr3z)
 @author levi@leviperez.dev
 @date   2020-07-18
@@ -21,8 +21,8 @@ namespace PyroDK
   using Type = System.Type;
 
   
-  [CreateAssetMenu(menuName = "PyroDK/String Lookup", order = -150)]
-  public sealed class StringLookupAsset : BaseAsset, ILookup<string>
+  [CreateAssetMenu(menuName = "PyroDK/Dictionary Asset", order = -150)]
+  public sealed class DictionaryAsset : BaseAsset, ILookup<string>
   {
     public Type KeyType   => typeof(string);
     public Type ValueType => typeof(string);

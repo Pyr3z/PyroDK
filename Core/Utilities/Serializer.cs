@@ -32,32 +32,29 @@ namespace PyroDK
     Null = 0,
 
     [HideInInspector] // only hidden with PyroDK drawers.
-    Unsupported = 1,
+    Unsupported,
+    [HideInInspector]
+    Generic,
 
     // value types:
-    String  = 2,
-    Integer = 3,
-    Float   = 4,
-    Bool    = 5,
+    String,
+    Integer,
+    Float,
+    Bool,
 
     // reference types:
-    RefAssetObject = 6,
-    RefSceneObject = 7,
-
-    [HideInInspector]
-    COUNT
+    RefAssetObject,
+    RefSceneObject,
   }
 
 
   
-  public interface IJsonWrapper
+  internal interface IJsonWrapper
   {
     object Value { get; set; }
     string ToJson(object value);
     object FromJson(string json);
   }
-
-
 
   public static class WrappedSerializer<T>
   {
@@ -148,48 +145,53 @@ namespace PyroDK
     public const string NULL_REF_JSON_STRING = "{\"v\":{\"instanceID\":0}}";
 
 
-    private readonly static Type[] s_RtTypeCodeLookup = new Type[(int)SerialTypeCode.COUNT]
+    private readonly static Type[] s_RtTypeCodeLookup = new Type[]
     {
-      typeof(object), // 0: Null
-      typeof(object), // 1: Unsupported
+      typeof(object), // Null
 
-      typeof(string), // 2: String
-      typeof(int),    // 3: Integer
-      typeof(float),  // 4: Float
-      typeof(bool),   // 5: Bool
+      typeof(object), // Unsupported
+      typeof(object), // Generic
 
-      typeof(Object), // 6: RefAssetObject
-      typeof(Object), // 7: RefSceneObject
+      typeof(string), // String
+      typeof(int),    // Integer
+      typeof(float),  // Float
+      typeof(bool),   // Bool
+
+      typeof(Object), // RefAssetObject
+      typeof(Object), // RefSceneObject
     };
 
-    private readonly static string[] s_DefaultValueStringLookup = new string[(int)SerialTypeCode.COUNT]
+    private readonly static string[] s_DefaultValueStringLookup = new string[]
     {
-      null,               // 0: Null
-      null,               // 1: Unsupported
+      null,               // Null
 
-      string.Empty,       // 2: String
-      (0).ToString(),     // 3: Integer
-      (0f).ToString(),    // 4: Float
-      (false).ToString(), // 5: Bool
+      null,               // Unsupported
+      null,               // Generic
 
-      null,               // 6: RefAssetObject
-      null,               // 7: RefSceneObject
+      string.Empty,       // String
+      (0).ToString(),     // Integer
+      (0f).ToString(),    // Float
+      (false).ToString(), // Bool
+
+      null,               // RefAssetObject
+      null,               // RefSceneObject
     };
 
-    private readonly static object[] s_DefaultValueObjectLookup = new object[(int)SerialTypeCode.COUNT]
+    private readonly static object[] s_DefaultValueObjectLookup = new object[]
     {
-      null,         // 0: Null
-      null,         // 1: Unsupported
+      null,         // Null
 
-      string.Empty, // 2: String
-      0,            // 3: Integer
-      0f,           // 4: Float
-      false,        // 5: Bool
+      null,         // Unsupported
+      null,         // Generic
 
-      null,         // 6: RefAssetObject
-      null,         // 7: RefSceneObject
+      string.Empty, // String
+      0,            // Integer
+      0f,           // Float
+      false,        // Bool
+
+      null,         // RefAssetObject
+      null,         // RefSceneObject
     };
-
 
     private static readonly Dictionary<Type, IJsonWrapper> s_CachedWrappers = new Dictionary<Type, IJsonWrapper>();
 
@@ -200,8 +202,13 @@ namespace PyroDK
 
     public static bool IsValidJson(string json)
     {
-      return  json != null && json.Length > 1 &&
-              json.EndsWith("}") && json.StartsWith("{");
+      return json != null && json.Length > 1 &&
+             json.EndsWith("}") && json.StartsWith("{");
+    }
+
+    public static bool IsSerializable(Type type)
+    {
+      return false;
     }
 
 
@@ -265,7 +272,7 @@ namespace PyroDK
         return value.ToString();
       }
 
-      if (type.IsEnum) // TODO Enum.GetHashCode() is a smol int
+      if (type.IsEnum)
       {
         return string.Format(FMT_ENUM, System.Convert.ToUInt64(value), value.ToString());
       }
@@ -346,8 +353,8 @@ namespace PyroDK
       else if (type.IsEnum)
       {
         // prefer name over hash
-        int split = value_str.IndexOf(SPLIT_ENUM);
-        var name  = value_str.Substring(split + 1); // safe bc -1 + 1 = 0
+        int split   = value_str.IndexOf(SPLIT_ENUM);
+        string name = value_str.Substring(split + 1); // safe bc -1 + 1 = 0
 
         try
         {
@@ -475,7 +482,7 @@ namespace PyroDK
 
       if (TryParseString(value, field.FieldType, out object parsed))
       {
-        var prev = field.GetValue(instance);
+        object prev = field.GetValue(instance);
         if (prev != parsed)
         {
           field.SetValue(instance, parsed);
@@ -513,6 +520,10 @@ namespace PyroDK
           return SerialTypeCode.RefSceneObject;
 
         return SerialTypeCode.RefAssetObject;
+      }
+      else if (type.IsDefined<System.SerializableAttribute>())
+      {
+        return SerialTypeCode.Generic;
       }
 
       return SerialTypeCode.Unsupported;
@@ -560,7 +571,9 @@ namespace PyroDK
 
 
 
-    #if UNITY_EDITOR
+#if UNITY_EDITOR
+#pragma warning disable IDE0051
+
     [UnityEditor.MenuItem("PyroDK/Debug Info Loggers/Log Null Ref JSON", priority = -50)]
     private static void MenuLogNullRefJSON()
     {
@@ -572,7 +585,9 @@ namespace PyroDK
         Logging.ShouldNotReach(blame: json);
       }
     }
-    #endif
+
+#pragma warning restore IDE0051
+#endif
 
   }
 

@@ -115,10 +115,8 @@ namespace PyroDK
       if (m_Options < OptionFlags.Update)
         return;
 
-      var callback = SelectCallback();
-
       if (m_Options.HasFlag(OptionFlags.Update))
-        m_UpdateCallback = callback;
+        m_UpdateCallback = SelectCallback();
 
       if (m_Options.HasFlag(OptionFlags.FixedUpdate))
         m_FixedUpdateCallback = SelectCallback();

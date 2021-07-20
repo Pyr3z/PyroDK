@@ -61,22 +61,18 @@ namespace PyroDK.Editor
           return;
         }
 
-        DrawRect( pos:      new Rect(total.x, total.y, ViewWidth - total.x, total.height),
-                  outline:  Colors.GUI.HashMapOutline,
-                  fill:     Colors.GUI.HashMapBG);
+        total.xMin -= STD_INDENT;
 
-        var rect_key = new Rect(LabelStartX, total.y, FieldEndX - LabelStartX, STD_LINE_HEIGHT);
+        DrawRect(pos:     new Rect(total.x - 2f, total.y, total.width + 6f, total.height),
+                 outline: Colors.GUI.HashMapOutline,
+                 fill:    Colors.GUI.HashMapBG);
 
-        label.text = $"  {label.text}";
+        var rect_key = new Rect(total.x, total.y, total.width, STD_LINE_HEIGHT);
+
+        GUI.Label(rect_key, $"count:{m_Map.Count} | capacity:{m_Map.Capacity}", Styles.TextDetail);
+
+        label.text += m_MapTypeName;
         prop.isExpanded = FoldoutPrefixLabel(in rect_key, out Rect rect_val, label, prop.isExpanded);
-
-        rect_key.x += m_LabelWidth;
-        rect_key.xMax = rect_val.x + rect_val.width / 2f - STD_PAD;
-        InfoField(rect_key, m_MapTypeName, style: Styles.Label);
-
-        rect_val.x = rect_key.xMax + STD_PAD;
-        rect_val.xMax = FieldEndX - STD_PAD;
-        InfoField(rect_val, $"(n={m_Map.Count}, capacity={m_Map.Capacity})", style: Styles.TextDetail);
 
         if (!prop.isExpanded)
           return;
@@ -87,10 +83,10 @@ namespace PyroDK.Editor
         rect_val.y = rect_key.y += STD_LINE_ADVANCE;
 
         // key header column
-        rect_key.x = LabelStartX + STD_INDENT;
-        rect_key.width = LabelWidth - STD_INDENT;
+        rect_key.x = total.x + STD_PAD;
+        rect_key.width = 0.45f * (total.width - s_TypeDropdownWidth);
 
-        if (m_Map.KeyType == typeof(TypedStringKey))
+        if (m_Map.KeyType == typeof(TypedKey))
         {
           TypedKeyHeader(rect_key);
         }
@@ -100,8 +96,9 @@ namespace PyroDK.Editor
         }
 
         // map-wide button column
-        rect_val.x = FieldStartX;
-        rect_val.width = (FieldWidth - STD_PAD) / 2f;
+        rect_val.xMin = rect_key.xMax + STD_PAD;
+        rect_val.xMax = total.xMax;
+        rect_val.width = (rect_val.width - STD_PAD) / 2f;
 
         // add entry button:
         if (GUI.Button(rect_val, "Add Entry", Styles.ButtonSmall))
@@ -110,9 +107,9 @@ namespace PyroDK.Editor
 
           var new_pair = m_Pairs.GetArrayElementAtIndex(ilen);
 
-          if (m_Map is SerialValueMap)
+          if (m_Map is OmniLookup)
           {
-            SerialValueMapNewStringEntry(new_pair, ilen);
+            OmniLookupNewStringEntry(new_pair, ilen);
             return;
           }
 
@@ -128,7 +125,7 @@ namespace PyroDK.Editor
             new_val.stringValue = s_LoremIpsum[ilen % s_LoremIpsum.Length];
           }
 
-          _ = prop.serializedObject.ApplyModifiedProperties();
+          prop.serializedObject.ApplyModifiedProperties();
           return;
         }
 
@@ -138,19 +135,18 @@ namespace PyroDK.Editor
         if (GUI.Button(rect_val, "Clear All", Styles.ButtonSmall))
         {
           m_Pairs.ClearArray();
-          _ = prop.serializedObject.ApplyModifiedProperties();
+          prop.serializedObject.ApplyModifiedProperties();
           return;
         }
 
         // advance to start entry rows, reset val column
         rect_val.y = rect_key.y += STD_LINE_ADVANCE; // + VERTICAL_SPACE;
 
-        rect_val.x      = FieldStartX;
-        rect_val.width  = FieldWidth;
+        rect_val.xMin = rect_key.xMax + STD_PAD;
 
         // make rect for opening an extended options menu per entry:
         var rect_opt_btn  = new Rect(rect_val);
-        rect_opt_btn.xMin = rect_opt_btn.xMax - STD_LINE_HEIGHT;
+        rect_opt_btn.xMin = rect_opt_btn.xMax - STD_TOGGLE_W;
 
         rect_val.xMax = rect_opt_btn.xMin - STD_PAD;
 
@@ -172,8 +168,8 @@ namespace PyroDK.Editor
         // handle custom drawers
         System.Action<SerializedProperty, Rect, Rect> entry_drawer;
 
-        if (m_Map is SerialValueMap)
-          entry_drawer = SerialValueMapEntryDrawer;
+        if (m_Map is OmniLookup)
+          entry_drawer = OmniLookupEntryDrawer;
         else if (m_StrictRefType)
           entry_drawer = ObjectLookupEntryDrawer;
         else
@@ -262,6 +258,8 @@ namespace PyroDK.Editor
 
           if (m_StrictRefType)
             m_MapTypeName = $" <{Types.GetRichLogName(m_Map.KeyType)}, {m_StrictRefType.LogName()}>";
+          else if (m_Map.ValueType == typeof(object))
+            m_MapTypeName = RichText.Comment(Types.GetLogName(m_Map));
           else
             m_MapTypeName = $" <{Types.GetRichLogName(m_Map.KeyType)}, {Types.GetRichLogName(m_Map.ValueType)}>";
 
@@ -295,7 +293,7 @@ namespace PyroDK.Editor
         menu.AddItem(labels[2], on: false, () =>
         {
           m_Pairs.DeleteArrayElementAtIndex(i);
-          _ = m_Pairs.serializedObject.ApplyModifiedProperties();
+          m_Pairs.serializedObject.ApplyModifiedProperties();
           GUI.changed = true;
         });
 
@@ -308,7 +306,7 @@ namespace PyroDK.Editor
           {
             if (m_Pairs.MoveArrayElement(i, i - 1))
             {
-              _ = m_Pairs.serializedObject.ApplyModifiedProperties();
+              m_Pairs.serializedObject.ApplyModifiedProperties();
               GUI.changed = true;
             }
           });
@@ -321,7 +319,7 @@ namespace PyroDK.Editor
           {
             if (m_Pairs.MoveArrayElement(i, i + 1))
             {
-              _ = m_Pairs.serializedObject.ApplyModifiedProperties();
+              m_Pairs.serializedObject.ApplyModifiedProperties();
               GUI.changed = true;
             }
           });
@@ -385,12 +383,12 @@ namespace PyroDK.Editor
       }
 
 
-      private void SerialValueMapEntryDrawer(SerializedProperty prop_pair, Rect rect_key, Rect rect_val)
+      private void OmniLookupEntryDrawer(SerializedProperty prop_pair, Rect rect_key, Rect rect_val)
       {
         var prop_typedkey = prop_pair.FindPropertyRelative("Key");
         var prop_valuestr = prop_pair.FindPropertyRelative("Value");
 
-        Logging.Assert(prop_typedkey.TryGetUnderlyingValue(out TypedStringKey tkey));
+        Logging.Assert(prop_typedkey.TryGetUnderlyingValue(out TypedKey tkey));
         
         bool valid =  m_BadKeySet.Add(tkey) &&
                       m_DupeSet.Add(tkey)   &&
@@ -497,8 +495,8 @@ namespace PyroDK.Editor
             }
 
             EditorGUI.BeginChangeCheck();
-            curr_obj = EditorGUI.ObjectField( rect_val, GUIContent.none, curr_obj, stype.Type,
-                                              allowSceneObjects: false);
+            curr_obj = EditorGUI.ObjectField(rect_val, GUIContent.none, curr_obj, stype.Type,
+                                             allowSceneObjects: false);
             if (EditorGUI.EndChangeCheck())
             {
               var prop_typename = prop_strict_type.FindPropertyRelative("m_TypeName");
@@ -541,7 +539,7 @@ namespace PyroDK.Editor
         }
       }
 
-      private static void SerialValueMapNewStringEntry(SerializedProperty new_pair, int i)
+      private static void OmniLookupNewStringEntry(SerializedProperty new_pair, int i)
       {
         var typed_key = new_pair.FindPropertyRelative("Key");
 
@@ -551,13 +549,10 @@ namespace PyroDK.Editor
         var type_code = typed_key.FindPropertyRelative("Type");
         type_code.enumValueIndex = (int)SerialTypeCode.String;
 
-        //var type_name = new_pair.FindPropertyRelative("StrictRefType.m_TypeName");
-        //type_name.stringValue = TSpy<Object>.AQName;
-
         var new_val = new_pair.FindPropertyRelative("Value");
         new_val.stringValue = s_LoremIpsum[i % s_LoremIpsum.Length];
 
-        _ = new_pair.serializedObject.ApplyModifiedProperties();
+        new_pair.serializedObject.ApplyModifiedProperties();
       }
 
 
@@ -566,64 +561,63 @@ namespace PyroDK.Editor
         InfoField(pos, key_label, Styles.TextDetailCenter);
       }
 
-      private static void TypedKeyHeader(Rect pos)
+      private static void TypedKeyHeader(Rect rect)
       {
-        const string LABEL_TYPECODE = "Type";
-        const string LABEL_KEY = "Key (string)";
+        float x_max = rect.xMax;
+        rect.width = rect.width / 2f - STD_LINE_HEIGHT;
 
-        float x_max = pos.xMax;
-        pos.width = pos.width / 2f - STD_LINE_HEIGHT;
+        InfoField(rect, "Type", Styles.TextDetailCenter);
 
-        InfoField(pos, LABEL_TYPECODE, Styles.TextDetailCenter);
+        rect.x += rect.width + STD_PAD;
+        rect.xMax = x_max;
 
-        pos.x += pos.width + STD_PAD;
-        pos.xMax = x_max;
-
-        InfoField(pos, LABEL_KEY, Styles.TextDetailCenter);
+        InfoField(rect, "Key", Styles.TextDetailCenter);
       }
 
 
       private enum ViewableTypeCode
       {
-        Null        = SerialTypeCode.Null,
-        String      = SerialTypeCode.String,
-        Integer     = SerialTypeCode.Integer,
-        Float       = SerialTypeCode.Float,
-        Bool        = SerialTypeCode.Bool,
-        Asset       = SerialTypeCode.RefAssetObject,
+        Null   = SerialTypeCode.Null,
+        String = SerialTypeCode.String,
+        Int    = SerialTypeCode.Integer,
+        Float  = SerialTypeCode.Float,
+        Bool   = SerialTypeCode.Bool,
+        Asset  = SerialTypeCode.RefAssetObject,
 
         [HideInInspector]
         Unsupported = SerialTypeCode.Unsupported
       }
 
-      private static bool TypedKeyField(Rect pos, SerializedProperty prop, bool valid, out SerializedProperty prop_typecode)
+      private static readonly float s_TypeDropdownWidth = Styles.Popup.CalcWidth("string");
+      private static bool TypedKeyField(Rect rect, SerializedProperty prop, bool valid, out SerializedProperty prop_typecode)
       {
         prop_typecode = prop.FindPropertyRelative("Type");
 
         Logging.Assert(prop_typecode != null, "prop_typecode != null");
 
-        float x_max = pos.xMax;
-        pos.width = pos.width / 2f - STD_LINE_HEIGHT;
+        float x_max = rect.xMax;
+        //rect.width = rect.width / 2f - STD_LINE_HEIGHT;
+        rect.width = s_TypeDropdownWidth;
 
-        if (EnumPopupField( pos, prop_typecode, typeof(ViewableTypeCode),
-                            default_value: (long)ViewableTypeCode.Unsupported))
+        if (EnumPopupField(rect, prop_typecode, typeof(ViewableTypeCode),
+                           default_value: (long)SerialTypeCode.Unsupported))
         {
           return true;
         }
 
-        pos.x += pos.width + STD_PAD;
-        pos.xMax = x_max;
+        rect.x += rect.width + STD_PAD;
+        rect.xMax = x_max;
 
         if (valid)
-          _ = DelayedStringField(pos, prop.FindPropertyRelative("String"), Styles.TextFieldGood);
+          DelayedStringField(rect, prop.FindPropertyRelative("String"), Styles.TextFieldGood);
         else
-          _ = DelayedStringField(pos, prop.FindPropertyRelative("String"), Styles.TextFieldBad);
+          DelayedStringField(rect, prop.FindPropertyRelative("String"), Styles.TextFieldBad);
 
         return false;
       }
 
-    }
+    } // end class IMapDrawer
 
-  }
+  } // end partial class GUIDrawers
 
 }

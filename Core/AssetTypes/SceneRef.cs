@@ -361,7 +361,7 @@ namespace PyroDK
     public float FadeOutTime => m_FadeOutTime.AtLeast(0f);
 
 
-    public DataLookupAsset UserDataLookup
+    public OmniLookupAsset UserDataLookup
     {
       get => m_DataLookupAsset;
       set => m_DataLookupAsset = value;
@@ -437,7 +437,7 @@ namespace PyroDK
   [Header("Additional User Data")] [Space(22f)]
     [SerializeField]
     [Tooltip("An external asset is used here in case the user wishes to more efficiently share data between Scenes.")]
-    private DataLookupAsset m_DataLookupAsset;
+    private OmniLookupAsset m_DataLookupAsset;
     
     #if UNITY_EDITOR
 

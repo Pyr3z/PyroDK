@@ -1,5 +1,5 @@
 ﻿/**
-@file   PyroDK/Core/DataTypes/BaseSerialKVP.cs
+@file   PyroDK/Core/DataTypes/SerialKVP.cs
 @author Levi Perez (Pyr3z)
 @author levi@leviperez.dev
 @date   2020-09-12
@@ -17,12 +17,22 @@ namespace PyroDK
 
 
   [System.Serializable]
-  public abstract class BaseSerialKVP<TKey, TValue> : IPair<TKey, TValue>
+  public abstract class SerialKVP<TKey, TValue> : IPair<TKey, TValue>
   {
-    // TODO separate file?
+    // Dummy safeguard:
+    static SerialKVP()
+    {
+      // called for each instantiation of this base class
+      Debug.Assert(  TSpy<TKey>.SerialCode > SerialTypeCode.Unsupported, $"Key type is not serializable! {TSpy<TKey>.LogName}");
+      Debug.Assert(TSpy<TValue>.SerialCode > SerialTypeCode.Unsupported, $"Value type is not serializable! {TSpy<TValue>.LogName}");
+    }
 
+
+    #region IPair impl.
     public int Length => 2;
     public object this[int i] => (i == 1) ? (object)Value : Key;
+
+    #endregion IPair impl.
 
 
     public Type KeyType => TSpy<TKey>.SerialType;
