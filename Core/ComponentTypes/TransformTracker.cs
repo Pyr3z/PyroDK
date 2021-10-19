@@ -43,6 +43,14 @@ namespace PyroDK
     #if UNITY_EDITOR
     [SerializeField] [ButtonBool(text: "Set Transform to Offset")]
     private bool m_ApplyPoseButton;
+    private void OnValidate()
+    {
+      if (m_ApplyPoseButton)
+      {
+        SelectCallback()?.Invoke();
+        m_ApplyPoseButton = false;
+      }
+    }
     #endif
 
 
@@ -137,15 +145,6 @@ namespace PyroDK
           return UpdateFullPose;
         default:
           return null;
-      }
-    }
-
-    private void OnValidate()
-    {
-      if (m_ApplyPoseButton)
-      {
-        SelectCallback()?.Invoke();
-        m_ApplyPoseButton = false;
       }
     }
 

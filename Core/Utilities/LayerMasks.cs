@@ -191,15 +191,6 @@ namespace PyroDK
       return (mask & (1 << obj.layer)) != 0;
     }
 
-    public static bool ContainsAny(this LayerMask mask, IEnumerable<GameObject> objs)
-    {
-      foreach (var obj in objs)
-        if ((mask & (1 << obj.layer)) != 0)
-          return true;
-      
-      return false;
-    }
-
     public static bool ContainsAny(this LayerMask mask, GameObject obj1, params GameObject[] objs)
     {
       if ((mask & (1 << obj1.layer)) != 0)
@@ -212,8 +203,11 @@ namespace PyroDK
       return false;
     }
 
-    public static bool ContainsAll(this LayerMask mask, IEnumerable<GameObject> objs)
+    public static bool ContainsAll(this LayerMask mask, GameObject obj1, params GameObject[] objs)
     {
+      if ((mask & (1 << obj1.layer)) == 0)
+        return false;
+
       foreach (var obj in objs)
         if ((mask & (1 << obj.layer)) == 0)
           return false;
@@ -221,11 +215,18 @@ namespace PyroDK
       return true;
     }
 
-    public static bool ContainsAll(this LayerMask mask, GameObject obj1, params GameObject[] objs)
-    {
-      if ((mask & (1 << obj1.layer)) == 0)
-        return false;
 
+    public static bool ContainsAny(this LayerMask mask, IEnumerable<GameObject> objs)
+    {
+      foreach (var obj in objs)
+        if ((mask & (1 << obj.layer)) != 0)
+          return true;
+
+      return false;
+    }
+
+    public static bool ContainsAll(this LayerMask mask, IEnumerable<GameObject> objs)
+    {
       foreach (var obj in objs)
         if ((mask & (1 << obj.layer)) == 0)
           return false;

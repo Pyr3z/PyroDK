@@ -42,7 +42,7 @@ namespace PyroDK
       LogError<object>(DefaultAssertMessage, ctx: null);
       return true;
       #else
-      return !condition;
+      return !assertion;
       #endif
     }
 
@@ -62,7 +62,7 @@ namespace PyroDK
       LogError<object>($"{DefaultAssertMessage} \"{message}\"", ctx: null);
       return true;
       #else
-      return !condition;
+      return !assertion;
       #endif
     }
 
