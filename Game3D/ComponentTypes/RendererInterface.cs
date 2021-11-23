@@ -5,8 +5,8 @@
 @date   2020-08-10
 
 @brief
-  Data type that stores and handles 1st-Person
-  mouse looking details.
+  An adapter component for externally interfacing with a
+  GameObject's attached Renderer components.
 **/
 
 
@@ -44,7 +44,7 @@ namespace PyroDK.Game3D
 
 
     [SerializeField]
-    private int m_MaterialIndex;
+    private int      m_MaterialIndex;
     [SerializeField] [ReadOnly]
     private Material m_StartMaterial;
     [SerializeField]

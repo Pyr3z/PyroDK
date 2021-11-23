@@ -157,9 +157,9 @@ namespace PyroDK.Editor
 
 
     // TODO make this more portable and/or use Addressables. This is currently shit and I admit it.
-    private const string PATH_FONT_LABEL = "Assets/PyroDK/Core/Assets/Fonts/IBMPlex/IBMPlexSans-Medium.ttf";
-    private const string PATH_FONT_MONO  = "Assets/PyroDK/Core/Assets/Fonts/IBMPlex/IBMPlexMono-Medium.ttf";
-    private const string PATH_FONT_TITLE = "Assets/PyroDK/Core/Assets/Fonts/IBMPlex/IBMPlexSerif-Medium.ttf";
+    private const string PATH_FONT_LABEL = "Assets/PyroDK/Assets/Fonts/IBMPlex/IBMPlexSans-Medium.ttf";
+    private const string PATH_FONT_MONO  = "Assets/PyroDK/Assets/Fonts/IBMPlex/IBMPlexMono-Medium.ttf";
+    private const string PATH_FONT_TITLE = "Assets/PyroDK/Assets/Fonts/IBMPlex/IBMPlexSerif-Medium.ttf";
     //
 
 
