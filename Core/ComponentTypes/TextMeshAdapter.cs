@@ -1,5 +1,5 @@
 ﻿/**
-@file   PyroDK/Core/ComponentTypes/TextMeshInterface.cs
+@file   PyroDK/Core/ComponentTypes/TextMeshAdapter.cs
 @author Levi Perez (Pyr3z)
 @author levi@leviperez.dev
 @date   2020-07-05
@@ -20,8 +20,8 @@ using TMPro;
 namespace PyroDK
 {
 
-  [AddComponentMenu("PyroDK/Text Mesh Interface")]
-  public class TextMeshInterface : BaseInterface<TMP_Text>
+  [AddComponentMenu("PyroDK/TextMesh Pro Adapter")]
+  public class TextMeshAdapter : BaseAdapter<TMP_Text>
   {
 
     [SerializeField] // [ReadOnly]

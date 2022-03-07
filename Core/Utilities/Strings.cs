@@ -41,16 +41,6 @@ namespace PyroDK
       return false;
     }
 
-    public static string AssertNonEmpty(this string str, in string name = "str")
-    {
-      if (string.IsNullOrEmpty(str))
-      {
-        throw new System.ArgumentNullException(name);
-      }
-
-      return str;
-    }
-
 
     public static bool TryParseNextIndex(this string str, out int idx)
     {

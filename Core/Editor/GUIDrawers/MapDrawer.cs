@@ -1,5 +1,5 @@
 ﻿/**
-@file   PyroDK/Core/Editor/GUIDrawers/IMapDrawer.cs
+@file   PyroDK/Core/Editor/GUIDrawers/MapDrawer.cs
 @author Levi Perez (Pyr3z)
 @author levi@leviperez.dev
 @date   2020-10-06
@@ -22,7 +22,7 @@ namespace PyroDK.Editor
   {
 
     [CustomPropertyDrawer(typeof(IMap), useForChildren: true)]
-    private sealed class IMapDrawer : PropertyDrawer
+    private sealed class MapDrawer : PropertyDrawer
     {
       private const float N_LINES_STRING_VALUE  = 2.85f;
       private const int   CACHE_GUI_THRESHOLD   = 32;

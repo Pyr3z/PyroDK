@@ -1,5 +1,5 @@
 ﻿/**
-@file   PyroDK/Game3D/ComponentTypes/PostProcessInterface.cs
+@file   PyroDK/Game3D/ComponentTypes/PostProcessAdapter.cs
 @author Levi Perez (Pyr3z)
 @author levi@leviperez.dev
 @date   2020-08-10
@@ -23,8 +23,8 @@ namespace PyroDK.Game3D
   using Volume = UnityEngine.Rendering.Volume;
 
   
-  [AddComponentMenu("PyroDK/Game3D/Post-Processing Volume Interface")]
-  public class PostProcessInterface : BaseInterface<Volume>
+  [AddComponentMenu("PyroDK/Game3D/Post-Processing Volume Adapter")]
+  public class PostProcessAdapter : BaseAdapter<Volume>
   {
 
     public float Weight
@@ -101,12 +101,12 @@ namespace PyroDK.Game3D
       m_TargetComponent.weight = target_weight;
     }
 
-  } // end class PostProcessInterface
+  } // end class PostProcessAdapter
 
 
   #else // !SRP_CORE
 
-  public class PostProcessInterface : BaseInterface<Object>
+  public class PostProcessAdapter : BaseAdapter<Object>
   {
 
     // TODO : fill with dummy code

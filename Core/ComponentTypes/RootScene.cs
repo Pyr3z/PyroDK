@@ -94,7 +94,7 @@ namespace PyroDK
     #if !SRP_CORE
     [ReadOnly]
     #endif
-    private Game3D.PostProcessInterface m_PostProcessFading;
+    private Game3D.PostProcessAdapter m_PostProcessFading;
 
     #if DEBUG
   [Header("[Debug]")]

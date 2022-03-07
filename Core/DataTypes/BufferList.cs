@@ -21,56 +21,43 @@ namespace PyroDK
     IReadOnlyCollection<T>,
     IPromiseKeeper
   {
-    private const int DEFAULT_CAPACITY = 8;
-
-    public bool     HasBuffer => m_Buff != null;
-    public List<T>  Buffer    => m_Buff;
+    public bool IsDisposed => m_Buff == null;
 
 
     private List<T> m_Buff = null;
 
-
+    // global pool of pre-allocated lists of this type
     private static readonly ObjectPool<List<T>> s_ListPool =
-      new ObjectPool<List<T>>(on_return: (list) => list.Clear(),
-                              start_with: 2, capacity: 4,
+      new ObjectPool<List<T>>(on_return:  (list) => list.Clear(),
+                              start_with: 2,
+                              capacity:   4,
                               notify_exceed_capacity: true);
 
-
+    private const int DEFAULT_CAPACITY = 8;
     public BufferList(int min_capacity = DEFAULT_CAPACITY)
     {
       Reserve(min_capacity);
     }
 
-    public BufferList(IEnumerable<T> copy_from, int min_capacity) :
-      this(min_capacity)
+    public BufferList(IEnumerable<T> copy_from, int min_capacity = DEFAULT_CAPACITY)
     {
-      if (copy_from == null)
-        return;
-      m_Buff.AddRange(copy_from);
+      Reserve(min_capacity);
+
+      if (copy_from != null)
+        m_Buff.AddRange(copy_from);
     }
 
-    public BufferList(IEnumerable<T> copy_from) :
-      this(DEFAULT_CAPACITY)
+    public BufferList(ICollection<T> copy_from)
     {
-      if (copy_from == null)
-        return;
-      m_Buff.AddRange(copy_from);
-    }
-
-    public BufferList(ICollection<T> copy_from) :
-      this(copy_from, copy_from?.Count ?? DEFAULT_CAPACITY)
-    {
-    }
-
-
-    private BufferList(bool trash)
-    {
-      // for making long-term buffers (see `MakePersistent()` below)
-    }
-
-    public static BufferList<T> MakePersistent()
-    {
-      return new BufferList<T>(trash: true);
+      if (copy_from == null || copy_from.Count == 0)
+      {
+        Reserve(DEFAULT_CAPACITY);
+      }
+      else
+      {
+        Reserve(copy_from.Count);
+        m_Buff.AddRange(copy_from);
+      }
     }
 
 
@@ -161,7 +148,7 @@ namespace PyroDK
     }
 
 
-    public bool EnsureIndex(int i)
+    public bool EnsureEmptyIndex(int i)
     {
       if (i >= m_Buff.Count && i < m_Buff.Capacity)
       {
@@ -195,7 +182,7 @@ namespace PyroDK
       get => (i >= m_Buff.Count && i < m_Buff.Capacity) ? default : m_Buff[i];
       set
       {
-        if (EnsureIndex(i))
+        if (EnsureEmptyIndex(i))
           m_Buff[i] = value;
       }
     }
@@ -235,7 +222,7 @@ namespace PyroDK
 
     public void RemoveAt(int i)
     {
-      if (EnsureIndex(i))
+      if (EnsureEmptyIndex(i))
         m_Buff.RemoveAt(i);
     }
 

@@ -1,5 +1,5 @@
 ﻿/**
-@file   PyroDK/Game3D/ComponentTypes/RendererInterface.cs
+@file   PyroDK/Game3D/ComponentTypes/RendererAdapter.cs
 @author Levi Perez (Pyr3z)
 @author levi@leviperez.dev
 @date   2020-08-10
@@ -18,10 +18,10 @@ using UnityEngine;
 namespace PyroDK.Game3D
 {
   
-  [AddComponentMenu("PyroDK/Game3D/Renderer Interface")]
-  public class RendererInterface : BaseInterface<Renderer>
+  [AddComponentMenu("PyroDK/Game3D/Renderer Adapter")]
+  public class RendererAdapter : BaseAdapter<Renderer>
   {
-    public override bool IsInterfaceConnected
+    public override bool IsConnected
     {
       get => m_TargetComponent && m_MaterialIndex >= 0;
     }
@@ -193,6 +193,6 @@ namespace PyroDK.Game3D
       m_CurrMaterial.Lerp(m_StartMaterial, m_BlendToMaterial, m_Blend);
     }
 
-  } // end class RendererInterface
+  } // end class RendererAdapter
 
 }

@@ -11,38 +11,9 @@
 
 using System.Collections.Generic;
 
-using UnityEngine;
-
 
 namespace PyroDK
 {
-
-  public interface IObjectPool
-  {
-  }
-
-  public interface IPromiseKeeper : System.IDisposable
-  {
-    int Count { get; }
-  }
-
-
-  public static class PromiseKeepers
-  {
-
-    public static bool IsVoid(this IPromiseKeeper keeper)
-    {
-      return keeper == null || keeper.Count == 0;
-    }
-
-    public static void SafeDispose(this System.IDisposable keeper)
-    {
-      if (keeper != null)
-        keeper.Dispose();
-    }
-
-  }
-
 
   public sealed class ObjectPool<T>
     where T : class, new()
