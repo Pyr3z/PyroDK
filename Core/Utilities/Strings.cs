@@ -133,7 +133,6 @@ namespace PyroDK
       #else
       return System.Guid.NewGuid().ToString("N");
       #endif
-
     }
 
 
@@ -233,28 +232,28 @@ namespace PyroDK
 
     public static string ExpandCamelCase(string str)
     {
-      if (IsEmpty(str) || str.Length == 1)
+      if (str == null || str.Length <= 1)
         return str;
-
-      var bob = new StringBuilder(str.Length + 8);
 
       int i = 0, ilen = str.Length;
 
-      bool in_word = false;
-
       if (str[1] == '_')
       {
+        // handles the forms "m_Variable", "s_StaticStuff" ...
         if (str.Length == 2)
           return str;
         else
           i = 2;
       }
-      else if (str[0] == 'm' && char.IsUpper(str[1]))
+      else if (char.IsLower(str[0]) && char.IsUpper(str[1]))
       {
+        // handles "mVariable", "aConstant"...
         i = 1;
       }
 
-      char c = str[i];
+      char c       = str[i];
+      bool in_word = false;
+      var  bob     = new StringBuilder(ilen + 8);
 
       if (char.IsLower(c)) // adjusts for lower camel case
       {
@@ -282,9 +281,6 @@ namespace PyroDK
 
         ++i;
       }
-
-      // TODO this is soooo hard coded man...
-      bob.Replace("Dont", "Don't");
 
       return bob.ToString();
     }

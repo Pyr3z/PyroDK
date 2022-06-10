@@ -21,9 +21,13 @@ namespace PyroDK
 
   public class HashMap<TKey, TValue> : IMap<TKey, TValue>
   {
+    public delegate int  KeyHashProvider(TKey key);
+    public delegate bool KeyEqualityProvider(TKey k0, TKey k1);
+    public delegate bool ValueEqualityProvider(TValue v0, TValue v1);
+
     protected struct Bucket
     {
-      private object m_Key;
+      private object m_Key; // must be a boxed object to ubiquitously support null.
 
       public TValue Value;
 
@@ -32,10 +36,10 @@ namespace PyroDK
 
       public TKey Key => (TKey)m_Key;
 
-      public int  Hash => m_DirtyHash & int.MaxValue;
-      public bool IsEmpty => m_Key == null;
-      public bool IsDefault => m_Key == null && m_DirtyHash == 0;
-      public bool IsDirty => m_DirtyHash < 0;
+      public int  Hash      => m_DirtyHash & ~Bitwise.SIGN_BIT_32;
+      public bool IsEmpty   => m_Key == null;
+      public bool IsDefault => m_DirtyHash == 0 && m_Key == null;
+      public bool IsDirty   => m_DirtyHash < 0;
       public bool IsSmeared => m_Key == null && m_DirtyHash < 0;
 
 
@@ -133,12 +137,6 @@ namespace PyroDK
     } // end struct Bucket
 
 
-    public delegate int KeyHashProvider(TKey key);
-    public delegate bool KeyEqualityProvider(TKey k0, TKey k1);
-    public delegate bool ValueEqualityProvider(TValue v0, TValue v1);
-
-
-
     public Type KeyType   => typeof(TKey);
     public Type ValueType => typeof(TValue);
 
@@ -151,6 +149,12 @@ namespace PyroDK
       get => m_LoadLimit;
       set => EnsureMinUserCapacity(value);
     }
+
+
+    public virtual bool   IsReadOnly      => false;
+    public virtual bool   IsSynchronized  => false;
+    public virtual object SyncRoot        => this;
+
 
     public TValue this[TKey key]
     {
@@ -272,7 +276,7 @@ namespace PyroDK
       int count   = m_Count;
       int version = m_Version;
       
-      (TKey key, TValue value) next = default;
+      (TKey key, TValue value) next;
 
       while (i --> 0)
       {
@@ -358,34 +362,13 @@ namespace PyroDK
 
     public bool Find(TKey key, out TValue result)
     {
-      result = default;
-      if (key == null || m_Count == 0)
-        return false;
-
-      var (hash31, jump) = CalcHashJump(key, m_Buckets.Length);
-
-      int i = hash31 % m_Buckets.Length;
-      int jumps = 0;
-
-      TriBool found;
-
-      do
+      if (FindBucket(key, out Bucket bucket) > -1)
       {
-        found = BucketEquals(i, hash31, key);
-
-        if (found.IsZero)
-          return false;
-
-        if (found.IsPositive)
-        {
-          result = m_Buckets[i].Value;
-          return true;
-        }
-
-        i = (i + jump) % m_Buckets.Length;
+        result = bucket.Value;
+        return true;
       }
-      while (++jumps < m_Count);
 
+      result = default;
       return false;
     }
 
@@ -658,7 +641,6 @@ namespace PyroDK
       }
     }
 
-
     public bool GrowTo(int user_cap, bool rehash)
     {
       if (m_LoadLimit >= user_cap)
@@ -699,7 +681,7 @@ namespace PyroDK
     }
 
 
-    #region Explicit Interface Members
+  #region INTERFACE IMPLEMENTATION (explicit)
 
     bool IReadOnlyMap.ContainsKey<TK>(TK key)
     {
@@ -721,6 +703,7 @@ namespace PyroDK
       return false;
     }
 
+
     bool IMap.Write<TK, TV>(TK key, TV val, bool overwrite)
     {
       return (key is TKey tkey && val is TValue tval) && TryInsert(tkey, tval, overwrite, out _ );
@@ -731,8 +714,59 @@ namespace PyroDK
       return (key is TKey tkey) && Unmap(tkey);
     }
 
-    #endregion Explicit Interface Members
 
+    void ICollection<(TKey key, TValue value)>.Add((TKey key, TValue value) kvp)
+    {
+      Add(kvp.key, kvp.value);
+    }
+
+    void ICollection<(TKey key, TValue value)>.Clear()
+    {
+      _ = Clear();
+    }
+
+    bool ICollection<(TKey key, TValue value)>.Contains((TKey key, TValue value) kvp)
+    {
+      return Find(kvp.key, out TValue val) && m_ValueEquals(kvp.value, val);
+    }
+
+    void ICollection<(TKey key, TValue value)>.CopyTo((TKey key, TValue value)[] array, int start)
+    {
+      int i = start, ilen = array?.Length ?? 0;
+
+      foreach (var kvp in this)
+      {
+        if (i >= ilen)
+          break;
+
+        array[i++] = kvp;
+      }
+    }
+
+    bool ICollection<(TKey key, TValue value)>.Remove((TKey key, TValue value) kvp)
+    {
+      int i = FindBucket(kvp.key, out Bucket bucket);
+      if (i > -1 && m_ValueEquals(kvp.value, bucket.Value))
+      {
+        m_Buckets[i].Smear();
+        --m_Count;
+        ++m_Version;
+        return true;
+      }
+
+      return false;
+    }
+
+
+    void ICollection.CopyTo(System.Array array, int index)
+    {
+      throw new System.NotImplementedException();
+    }
+
+    #endregion INTERFACE IMPLEMENTATION (explicit)
+
+
+    #region PRIVATE SECTION
 
     protected int GrowCapacity()
     {
@@ -747,6 +781,41 @@ namespace PyroDK
       }
 
       return m_LoadLimit;
+    }
+
+    protected int FindBucket(TKey key, out Bucket bucket)
+    {
+      bucket = default;
+      if (key == null || m_Count == 0)
+        return -1;
+
+      int ilen = m_Buckets.Length;
+
+      var (hash31, jump) = CalcHashJump(key, ilen);
+
+      int i = hash31 % ilen;
+      int jumps = 0;
+
+      TriBool found;
+
+      do
+      {
+        found = BucketEquals(i, hash31, key);
+
+        if (found.IsZero)
+          return -1;
+
+        if (found.IsPositive)
+        {
+          bucket = m_Buckets[i];
+          return i;
+        }
+
+        i = (i + jump) % ilen;
+      }
+      while (++jumps < m_Count);
+
+      return -1;
     }
 
     protected (int hash31, int jump) CalcHashJump(TKey key, int size)
@@ -782,6 +851,7 @@ namespace PyroDK
               m_ValueEquals(m_Buckets[i].Value, val);
     }
 
+
     protected bool TryInsert(TKey key, TValue val, bool overwrite, out int i)
     {
       if (key == null)
@@ -816,7 +886,9 @@ namespace PyroDK
 
       do
       {
-        if (m_Buckets[i].IsDefault)
+        var bucket = m_Buckets[i];
+
+        if (bucket.IsDefault)
         {
           // immediately at an empty bucket
           if (fallback != -1)
@@ -947,7 +1019,10 @@ namespace PyroDK
       m_Buckets = new_buckets;
     }
 
+  #endregion PRIVATE SECTION
 
+
+  #region DEFAULT DELEGATES
 
     protected static int DefaultKeyHash31(TKey key)
     {
@@ -964,6 +1039,8 @@ namespace PyroDK
       return (a != null && b != null) &&
               (a == b || a.Equals(b));
     }
+
+    #endregion DEFAULT DELEGATES
 
   } // end class HashMap
 

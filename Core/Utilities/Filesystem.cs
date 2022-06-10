@@ -89,7 +89,7 @@ namespace PyroDK
     public static readonly char[] InvalidPathChars      = SysPath.GetInvalidPathChars();
 
     public static readonly System.StringComparer PathStringComparer
-      = System.StringComparer.CurrentCulture;
+      = System.StringComparer.InvariantCulture;
 
 
 

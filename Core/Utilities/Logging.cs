@@ -8,21 +8,18 @@
   Logging qualities of life.
 **/
 
-#pragma warning disable UNT0008 // null propogation is FINE.
+//#pragma warning disable UNT0008 // null propogation
 
 using System.Collections.Generic;
 
 using UnityEngine;
 
+using Type          = System.Type;
+using StackFrame    = System.Diagnostics.StackFrame;
+using StringBuilder = System.Text.StringBuilder;
 
 namespace PyroDK
 {
-  using Type        = System.Type;
-  using StackFrame  = System.Diagnostics.StackFrame;
-  using MethodInfo  = System.Reflection.MethodBase;
-
-  using StringBuilder = System.Text.StringBuilder;
-
 
   public static class Logging
   {
@@ -140,14 +137,6 @@ namespace PyroDK
     }
 
 
-
-    private const string FMT_LOG            = "{0} {1}\n(in type {2})\n\nStackTrace:\n{3}";
-    private const string FMT_LOG_NAMED_CTX  = "{0} {1}\n(\"{3}\", type {2})\n\nStackTrace:\n{4}";
-
-    private const LogOption USE_PYRODK_STACKTRACE = LogOption.NoStacktrace;
-
-
-
     public static void Reached(object blame = null)
     {
       const string REACHED_MESSAGE = "<b><i>Reached!</i></b>";
@@ -191,11 +180,11 @@ namespace PyroDK
       string stacktrace_str;
       if (ctx is Type type_ctx)
       {
-               _ = GetFormattedStackTrace(full_stack, type_color, typeof(Logging), out stacktrace_str);
+               _ = GetFormattedStackTrace(full_stack, typeof(Logging), out stacktrace_str);
       }
       else
       {
-        type_ctx = GetFormattedStackTrace(full_stack, type_color, typeof(Logging), out stacktrace_str);
+        type_ctx = GetFormattedStackTrace(full_stack, typeof(Logging), out stacktrace_str);
       }
 
       string name;
@@ -274,14 +263,14 @@ namespace PyroDK
       if (!(ctx is Type type_ctx))
       {
         if (typeof(T) == typeof(object))
-          type_ctx = GetFormattedStackTrace(true, type_color, typeof(Logging), out stacktrace_str);
+          type_ctx = GetFormattedStackTrace(true, typeof(Logging), out stacktrace_str);
         else
           type_ctx = typeof(T);
       }
 
       if (stacktrace_str.IsEmpty())
       {
-        _ = GetFormattedStackTrace(true, type_color, typeof(Logging), out stacktrace_str);
+        _ = GetFormattedStackTrace(true, typeof(Logging), out stacktrace_str);
       }
 
       string name = null;
@@ -365,7 +354,6 @@ namespace PyroDK
       return null;
     }
 
-
     public static string GetCallingMethodName()
     {
       var frame = GetCallingStackFrame(get_file_info: false, skip_top: typeof(Logging));
@@ -375,18 +363,12 @@ namespace PyroDK
     }
 
 
-    private static string MakeStackFrameLink(StackFrame frame)
-    {
-      if (frame == null || !Filesystem.TryMakeRelativePath(frame.GetFileName(),
-                                                           Filesystem.ProjectRoot,
-                                                           out string file))
-      {
-        return string.Empty;
-      }
+    // PRIVATE SECTION //
 
-      return $"(at {file}:{frame.GetFileLineNumber()})";
-    }
+    private const string FMT_LOG = "{0} {1}\n(in type {2})\n\nStackTrace:\n{3}";
+    private const string FMT_LOG_NAMED_CTX = "{0} {1}\n(\"{3}\", type {2})\n\nStackTrace:\n{4}";
 
+    private const LogOption USE_PYRODK_STACKTRACE = LogOption.NoStacktrace;
 
 
     [SerializeStatic]
@@ -553,7 +535,7 @@ namespace PyroDK
     }
 
 
-    private static Type GetFormattedStackTrace(bool full, Color32 type_color, Type skip_top, out string trace_str)
+    private static Type GetFormattedStackTrace(bool full, Type skip_top, out string trace_str)
     {
       Type top_type   = skip_top;
       var  stacktrace = new System.Diagnostics.StackTrace(skipFrames: 2, fNeedFileInfo: true);
@@ -684,6 +666,17 @@ namespace PyroDK
       return bob.ToString();
     }
 
+    private static string MakeStackFrameLink(StackFrame frame)
+    {
+      if (frame == null || !Filesystem.TryMakeRelativePath(frame.GetFileName(),
+                                                           Filesystem.ProjectRoot,
+                                                           out string file))
+      {
+        return string.Empty;
+      }
+
+      return $"(at {file}:{frame.GetFileLineNumber()})";
+    }
 
 
     #if UNITY_EDITOR

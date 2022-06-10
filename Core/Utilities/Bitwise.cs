@@ -757,6 +757,36 @@ namespace PyroDK
     }
 
 
+    //
+    // Enum variant converts to ulong:
+    //
+    public static T LSB<T>(T bits)
+      where T : unmanaged, Enum, IConvertible
+    {
+      return EnumSpy<T>.ConvertFrom(LSB(bits.ToUInt64(null)));
+    }
+
+    public static bool HasAny<TEnum>(this TEnum self, TEnum flags)
+      where TEnum : unmanaged, Enum, IConvertible
+    {
+      return HasAnyBits(self.ToInt64(null), flags.ToInt64(null));
+    }
+
+    //
+    // CTZ impl.
+    //
+
+    public static int CTZ<T>(T bits, int fallback = -1)
+      where T : unmanaged, Enum, IConvertible
+    {
+      ulong value = bits.ToUInt64(null);
+
+      if (value == 0UL)
+        return fallback;
+
+      return CTZ(value);
+    }
+
 
     public static int CTZ(ulong bits)
     {
@@ -852,10 +882,8 @@ namespace PyroDK
 #endif
     }
 
-    //
-    // The signed variants simply cast and call the unsigned versions:
-    //
 
+    // The signed variants simply cast and call the unsigned versions:
     public static int CTZ(long bits)
     {
       return CTZ((ulong)bits);
@@ -874,34 +902,6 @@ namespace PyroDK
     public static int CTZ(sbyte bits)
     {
       return CTZ((byte)bits);
-    }
-
-
-    //
-    // Enum variant converts to ulong:
-    //
-
-    public static T LSB<T>(T bits)
-      where T : unmanaged, Enum, IConvertible
-    {
-      return EnumSpy<T>.ConvertFrom(LSB(bits.ToUInt64(null)));
-    }
-
-    public static bool HasAny<TEnum>(this TEnum self, TEnum flags)
-      where TEnum : unmanaged, Enum, IConvertible
-    {
-      return HasAnyBits(self.ToInt64(null), flags.ToInt64(null));
-    }
-
-    public static int CTZ<T>(T bits, int fallback = -1)
-      where T : unmanaged, Enum, IConvertible
-    {
-      ulong value = bits.ToUInt64(null);
-
-      if (value == 0UL)
-        return fallback;
-
-      return CTZ(value);
     }
 
 

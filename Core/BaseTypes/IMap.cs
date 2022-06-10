@@ -17,13 +17,10 @@ using System.Collections.Generic;
 namespace PyroDK
 {
 
-  public interface IReadOnlyMap : IEnumerable
+  public interface IReadOnlyMap : IEnumerable, ICollection
   {
-    System.Type KeyType   { get; }
-    System.Type ValueType { get; }
-
-    int Count     { get; }
-    int Capacity  { get; }
+    System.Type KeyType   { get; } // these type properties can be treated strictly or loosely --
+    System.Type ValueType { get; } // it's up to the implementor to follow what makes more sense.
 
     bool ContainsKey<TK>(TK key);
     bool Read<TK, TV>(TK key, out TV val);
@@ -42,7 +39,7 @@ namespace PyroDK
 
   public interface IMap : IReadOnlyMap
   {
-    new int Capacity    { get; set; }
+    int Capacity    { get; set; }
 
     bool Clear();
 
@@ -52,6 +49,7 @@ namespace PyroDK
 
   public interface IMap<TKey, TValue> :
     IReadOnlyMap<TKey, TValue>,
+    ICollection<(TKey key, TValue value)>,
     IMap
   {
     new TValue this[TKey key] { get; set; }

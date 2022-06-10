@@ -86,7 +86,7 @@ namespace PyroDK
         if (prev[0] == '#')
           prev = "#";
         else if (prev.StartsWith("0x", System.StringComparison.OrdinalIgnoreCase))
-          prev = "0x";
+          prev = prev.Remove(2);
         else
           prev = "";
       }
@@ -155,7 +155,7 @@ namespace PyroDK
     }
 
 
-    public static byte[] ToArray(this Color32 c)
+    public static byte[] ToBytes(this Color32 c)
     {
       return new byte[]
       {
