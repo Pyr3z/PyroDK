@@ -53,6 +53,10 @@ namespace PyroDK
     public bool IsDirty => m_HashMap != null && m_HashMap.Version != m_SerialVersion;
 
 
+    bool ICollection<(TKey key, TValue value)>.IsReadOnly => false;
+    bool ICollection.IsSynchronized => false; // TODO implement async hashmap
+    object ICollection.SyncRoot => this;
+
 
     [SerializeField]
     protected HashMapParams m_SerialParams;
@@ -328,6 +332,36 @@ namespace PyroDK
     bool IReadOnlyMap.Read<TK, TV>(TK key, out TV val)
     {
       return ((IMap)m_HashMap).Read(key, out val);
+    }
+
+    void ICollection<(TKey key, TValue value)>.Add((TKey key, TValue value) item)
+    {
+      ((ICollection<(TKey key, TValue value)>)m_HashMap).Add(item);
+    }
+
+    void ICollection<(TKey key, TValue value)>.Clear()
+    {
+      ((ICollection<(TKey key, TValue value)>)m_HashMap).Clear();
+    }
+
+    bool ICollection<(TKey key, TValue value)>.Contains((TKey key, TValue value) item)
+    {
+      return ((ICollection<(TKey key, TValue value)>)m_HashMap).Contains(item);
+    }
+
+    void ICollection<(TKey key, TValue value)>.CopyTo((TKey key, TValue value)[] array, int arrayIndex)
+    {
+      ((ICollection<(TKey key, TValue value)>)m_HashMap).CopyTo(array, arrayIndex);
+    }
+
+    bool ICollection<(TKey key, TValue value)>.Remove((TKey key, TValue value) item)
+    {
+      return ((ICollection<(TKey key, TValue value)>)m_HashMap).Remove(item);
+    }
+
+    void ICollection.CopyTo(System.Array array, int index)
+    {
+      ((ICollection)m_HashMap).CopyTo(array, index);
     }
   }
 

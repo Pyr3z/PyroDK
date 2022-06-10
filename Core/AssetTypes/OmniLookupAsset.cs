@@ -1,5 +1,5 @@
 ﻿/**
-@file   PyroDK/Core/AssetTypes/ValueLookupAsset.cs
+@file   PyroDK/Core/AssetTypes/OmniLookupAsset.cs
 @author Levi Perez (Pyr3z)
 @author levi@leviperez.dev
 @date   2020-07-18
@@ -33,34 +33,25 @@ namespace PyroDK
   {
     public OmniLookup Lookup => m_Lookup;
 
-
-    [SerializeField]
-    private OmniLookup m_Lookup = new OmniLookup();
-
-
-    private void Awake()
-    {
-      if (m_Lookup.IncompleteDeserialize)
-        m_Lookup.OnAfterDeserialize();
-    }
-
-
-    #region IMap<TypedKey, object> impl.
-
-    public Type KeyType => m_Lookup.KeyType;
-    public Type ValueType => m_Lookup.ValueType;
+    public Type KeyType     => m_Lookup.KeyType;
+    public Type ValueType   => m_Lookup.ValueType;
     public bool IsFixedSize => m_Lookup.IsFixedSize;
-    public int Count => m_Lookup.Count;
+    public int Count        => m_Lookup.Count;
     public int Capacity
     {
       get => m_Lookup.Capacity;
       set => m_Lookup.Capacity = value;
     }
+
     public object this[TypedKey key]
     {
       get => m_Lookup[key];
       set => m_Lookup[key] = value;
     }
+
+
+    [SerializeField]
+    private OmniLookup m_Lookup = new OmniLookup();
 
 
     public bool Find(TypedKey key, out object value)
@@ -104,13 +95,57 @@ namespace PyroDK
     }
 
 
+    private void Awake()
+    {
+      if (m_Lookup.IncompleteDeserialize)
+        m_Lookup.OnAfterDeserialize();
+    }
+
+
+    #region EXPLICIT INTERFACE IMPL.
+
+    bool ICollection<(TypedKey key, object value)>.IsReadOnly => false;
+    bool ICollection.IsSynchronized => false; // TODO async data structures
+    object ICollection.SyncRoot => this;
+
+
     bool IReadOnlyMap.ContainsKey<TK>(TK key)               => ((IReadOnlyMap)m_Lookup).ContainsKey(key);
     bool IMap.Erase<TK>(TK key)                             => ((IMap)m_Lookup).Erase(key);
     bool IReadOnlyMap.Read<TK, TV>(TK key, out TV val)      => ((IReadOnlyMap) m_Lookup).Read(key, out val);
     bool IMap.Write<TK, TV>(TK key, TV val, bool overwrite) => ((IMap)m_Lookup).Write(key, val, overwrite);
     IEnumerator IEnumerable.GetEnumerator()                 => m_Lookup.GetEnumerator();
 
-    #endregion IMap<TypedKey, object> impl.
+    void ICollection<(TypedKey key, object value)>.Add((TypedKey key, object value) item)
+    {
+      _ = m_Lookup.Map(item.key, item.value);
+    }
+
+    void ICollection<(TypedKey key, object value)>.Clear()
+    {
+      m_Lookup.Clear();
+    }
+
+    bool ICollection<(TypedKey key, object value)>.Contains((TypedKey key, object value) item)
+    {
+      return ((ICollection<(TypedKey key, object value)>)m_Lookup).Contains(item);
+    }
+
+    void ICollection<(TypedKey key, object value)>.CopyTo((TypedKey key, object value)[] array, int idx)
+    {
+      ((ICollection<(TypedKey key, object value)>)m_Lookup).CopyTo(array, idx);
+    }
+
+    bool ICollection<(TypedKey key, object value)>.Remove((TypedKey key, object value) item)
+    {
+      return ((ICollection<(TypedKey key, object value)>)m_Lookup).Remove(item);
+    }
+
+    void ICollection.CopyTo(System.Array array, int idx)
+    {
+      ((ICollection)m_Lookup).CopyTo(array, idx);
+    }
+
+  #endregion EXPLICIT INTERFACE IMPL.
 
   } // end class OmniLookupAsset
 

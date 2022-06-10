@@ -40,7 +40,11 @@ namespace PyroDK
       get => m_Lookup.Capacity;
       set => m_Lookup.Capacity = value;
     }
-    
+
+    bool ICollection<(string key, string value)>.IsReadOnly => false;
+    bool ICollection.IsSynchronized => false;
+    object ICollection.SyncRoot => this;
+
 
     [SerializeField]
     private StringLookup m_Lookup = new StringLookup(HashMapParams.Default);
@@ -69,6 +73,36 @@ namespace PyroDK
     bool IReadOnlyMap.Read<TK, TV>(TK key, out TV val)      => ((IReadOnlyMap)m_Lookup).Read(key, out val);
     bool IMap.Write<TK, TV>(TK key, TV val, bool overwrite) => ((IMap)m_Lookup).Write(key, val, overwrite);
     bool IMap.Erase<TK>(TK key)                             => ((IMap)m_Lookup).Erase(key);
+
+    void ICollection<(string key, string value)>.Add((string key, string value) item)
+    {
+      ((ICollection<(string key, string value)>)m_Lookup).Add(item);
+    }
+
+    void ICollection<(string key, string value)>.Clear()
+    {
+      ((ICollection<(string key, string value)>)m_Lookup).Clear();
+    }
+
+    bool ICollection<(string key, string value)>.Contains((string key, string value) item)
+    {
+      return ((ICollection<(string key, string value)>)m_Lookup).Contains(item);
+    }
+
+    void ICollection<(string key, string value)>.CopyTo((string key, string value)[] array, int arrayIndex)
+    {
+      ((ICollection<(string key, string value)>)m_Lookup).CopyTo(array, arrayIndex);
+    }
+
+    bool ICollection<(string key, string value)>.Remove((string key, string value) item)
+    {
+      return ((ICollection<(string key, string value)>)m_Lookup).Remove(item);
+    }
+
+    void ICollection.CopyTo(System.Array array, int index)
+    {
+      ((ICollection)m_Lookup).CopyTo(array, index);
+    }
   }
 
 }

@@ -80,6 +80,10 @@ namespace PyroDK
     public bool IncompleteDeserialize => ( m_HashMap == null ) ||
                                          ( m_Pairs.Count != m_HashMap.Count ); // bad condition?
 
+    bool ICollection<(TypedKey key, object value)>.IsReadOnly => false;
+    bool ICollection.IsSynchronized => false;
+    object ICollection.SyncRoot => this;
+
 
     [SerializeField]
     private HashMapParams m_SerialParams;
@@ -374,5 +378,34 @@ namespace PyroDK
       return true;
     }
 
+    void ICollection<(TypedKey key, object value)>.Add((TypedKey key, object value) item)
+    {
+      _ = Map(item.key, item.value);
+    }
+
+    void ICollection<(TypedKey key, object value)>.Clear()
+    {
+      _ = Clear();
+    }
+
+    bool ICollection<(TypedKey key, object value)>.Contains((TypedKey key, object value) item)
+    {
+      return item.key && ((ICollection<(TypedKey key, object value)>)m_HashMap).Contains(item);
+    }
+
+    void ICollection<(TypedKey key, object value)>.CopyTo((TypedKey key, object value)[] array, int idx)
+    {
+      ((ICollection<(TypedKey key, object value)>)m_HashMap).CopyTo(array, idx);
+    }
+
+    bool ICollection<(TypedKey key, object value)>.Remove((TypedKey key, object value) item)
+    {
+      return item.key && ((ICollection<(TypedKey key, object value)>)m_HashMap).Remove(item) && SetDirty();
+    }
+
+    void ICollection.CopyTo(System.Array array, int idx)
+    {
+      ((ICollection)m_HashMap).CopyTo(array, idx);
+    }
   }
 }

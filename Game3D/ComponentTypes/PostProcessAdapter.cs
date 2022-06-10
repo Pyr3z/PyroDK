@@ -106,13 +106,57 @@ namespace PyroDK.Game3D
 
   #else // !SRP_CORE
 
-  public class PostProcessAdapter : BaseAdapter<Object>
+  public class PostProcessAdapter : BaseAdapter<Component>
   {
 
-    // TODO : fill with dummy code
+    // TODO : fill out dummy code to be less dummy
 
-  }
+    public float Weight
+    {
+      get => 0f;
+      set { }
+    }
 
-  #endif
+    public float TargetWeightFadeIn => m_FlipFadeSemantics ? 0f : 1f;
+    public float TargetWeightFadeOut => m_FlipFadeSemantics ? 1f : 0f;
+
+
+    [SerializeField]
+    private bool m_FlipFadeSemantics = false;
+
+#pragma warning disable IDE0060
+
+    public void FadeIn(float duration)
+    {
+    }
+
+    public void FadeOut(float duration)
+    {
+    }
+
+
+    public IEnumerator FadeInAsync(float duration)
+    {
+      // TODO
+      yield break;
+    }
+
+    public IEnumerator FadeOutAsync(float duration)
+    {
+      // TODO
+      yield break;
+    }
+
+    public IEnumerator FadeAsync(float target_weight, float duration)
+    {
+      // TODO
+      yield break;
+    }
+
+#pragma warning restore IDE0060
+
+  } // end dumm class PostProcessAdapter
+
+  #endif // SRP_CORE
 
 }

@@ -52,7 +52,9 @@ namespace PyroDK
     private void Update()
     {
       foreach (var ev in m_InputManagerEvents)
-        ev.CheckedInvoke();
+      {
+        _ = ev.TryInvoke();
+      }
     }
     #endif
 
