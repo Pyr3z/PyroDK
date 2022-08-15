@@ -377,7 +377,7 @@ namespace PyroDK
     }
 
 
-
+    [System.Obsolete("This was a drunk algorithm. (UnityUpgradable) -> RichText.RemoveSoberly()", error: false)]
     public static string Remove(string text)
     {
       // probably a better way to do this but am dronk.

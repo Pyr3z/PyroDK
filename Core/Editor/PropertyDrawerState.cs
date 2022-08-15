@@ -17,7 +17,8 @@ namespace PyroDK.Editor
 
   public abstract class PropertyDrawerState
   {
-    #region Static Section
+
+  #region STATIC SECTION
 
     public static void Restore<TState>(SerializedProperty prop_root, out TState state)
       where TState : PropertyDrawerState, new()
@@ -71,7 +72,8 @@ namespace PyroDK.Editor
              ( state.NeedsUpdate || s_InspectorTracker.activeEditors.Length == 0 );
     }
 
-    #endregion Static Section
+  #endregion STATIC SECTION
+
 
     public bool NeedsUpdate => m_RootProp.IsDisposed();
     public bool IsStale { get; protected set; }

@@ -75,12 +75,12 @@ namespace PyroDK.Editor
           }
         }
 
-        public SerializedProperty GetChildIterator(SerializedProperty prop)
+        public SerializedProperty GetChildIterator()
         {
           if (ChildCount <= 0)
             return null;
 
-          return prop.FindPropertyRelative(UNITYEVENT_LAST_PROPERTY);
+          return m_RootProp.FindPropertyRelative(UNITYEVENT_LAST_PROPERTY);
         }
       } // end class State
 
@@ -127,14 +127,14 @@ namespace PyroDK.Editor
 
         if (FoldoutHeader.Open(pos, label, prop, out FoldoutHeader header, prop.depth))
         {
-          pos.x = header.Rect.x;
-          pos.xMax = total.xMax;
-          pos.y += pos.height + STD_PAD;
+          pos.x     = header.Rect.x;
+          pos.xMax  = total.xMax;
+          pos.y     += pos.height + STD_PAD;
 
           EditorGUI.BeginDisabledGroup(!state.Event.IsEnabled);
 
           // get the property iterator for our extra members:
-          var child_prop = state.GetChildIterator(prop);
+          var child_prop = state.GetChildIterator();
           if (child_prop != null)
           {
             int i = 0;

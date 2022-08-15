@@ -339,7 +339,7 @@ namespace PyroDK.Editor
       return TryGetUnderlyingBoxedValue(path, ref boxed_value);
     }
 
-    public static bool TryGetUnderlyingBoxedValue(string prop_path, ref object boxed_value)
+    private static bool TryGetUnderlyingBoxedValue(string prop_path, ref object boxed_value)
     {
       if (boxed_value == null)
         return false;
