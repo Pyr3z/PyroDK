@@ -479,7 +479,7 @@ namespace PyroDK
         (hash31, jump) = CalcHashJump(key, buckets.Length);
 
         bucket     = new Bucket(key, vals_iter.Current, hash31);
-        collisions = bucket.PlaceIn(buckets, jump, m_KeyEquals.Invoke);
+        collisions = bucket.PlaceIn(buckets, jump, m_KeyEquals);
         
         if (collisions < 0)
         {
